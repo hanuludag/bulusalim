@@ -1,0 +1,17 @@
+.steps {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 10px var(--gutter);
+  list-style: none;
+  border-bottom: 1px solid var(--c-line);
+  font-family: var(--f-mono);
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+}
+.steps .on {
+  color: var(--c-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

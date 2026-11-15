@@ -1,0 +1,66 @@
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--btn-h);
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font: 600 var(--fs-lg) var(--f-sans);
+  text-decoration: none;
+  padding: 0 var(--sp-4);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--btn-h);
+  border: 1px solid var(--c-ink);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--c-ink);
+  font: 500 var(--fs-lg) var(--f-sans);
+  text-decoration: none;
+  padding: 0 var(--sp-4);
+}
+.btn2.sm {
+  min-height: var(--touch);
+  font-size: var(--fs-md);
+  width: auto;
+  padding: 0 var(--sp-4);
+  flex: 0 0 auto;
+}
+.btn2[aria-pressed='true'] {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-on-accent);
+}
+.tb {
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: var(--touch);
+  color: var(--c-ink);
+  font: 500 var(--fs-md) var(--f-sans);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.tb.sm {
+  font-size: var(--fs-sm);
+}
+.tb.muted {
+  color: var(--c-ink-2);
+}

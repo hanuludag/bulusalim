@@ -1,0 +1,13 @@
+.av {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  background: var(--c-line);
+  color: var(--c-ink);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}

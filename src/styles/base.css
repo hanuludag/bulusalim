@@ -1,0 +1,256 @@
+/* Sıfırlama + gövde + ortak yardımcı sınıflar (tasarım dosyasındaki sözlükten) */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--c-ground);
+  color: var(--c-ink);
+  font-family: var(--f-sans);
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.no-scroll {
+  overflow: hidden;
+}
+
+p,
+h1,
+h2,
+h3 {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--c-ink);
+}
+
+/* Klavye odağı: görünür, kalın mürekkep çerçeve */
+:focus-visible {
+  outline: 2px solid var(--c-ink);
+  outline-offset: 2px;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+/* Sayfa kabuğu: masaüstünde ortada en fazla 430px */
+.page {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--c-ground);
+  position: relative;
+}
+
+/* yazı yardımcıları */
+.mono {
+  font-family: var(--f-mono);
+}
+.h1 {
+  font-family: var(--f-serif);
+  font-weight: 600;
+  font-size: var(--fs-xl);
+  line-height: 1.25;
+}
+.h2 {
+  font-family: var(--f-serif);
+  font-weight: 600;
+  font-size: var(--fs-lg);
+  line-height: 1.3;
+}
+.sec {
+  color: var(--c-ink-2);
+}
+.s13 {
+  font-size: var(--fs-sm);
+}
+.s17 {
+  font-size: var(--fs-lg);
+}
+.b {
+  font-weight: 600;
+}
+.m {
+  font-weight: 500;
+}
+.pad {
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+}
+.grow {
+  flex: 1 1 auto;
+}
+.strike {
+  text-decoration: line-through;
+  color: var(--c-ink-2);
+}
+.logo {
+  font-family: var(--f-mono);
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--c-ink);
+  text-decoration: none;
+}
+
+/* ekran okuyucu için görünmez metin */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* form alanı */
+.fld {
+  display: flex;
+  flex-direction: column;
+}
+.fld label {
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+}
+.inp {
+  width: 100%;
+  height: var(--touch);
+  border: 0;
+  border-bottom: 1px solid var(--c-ink-2);
+  background: transparent;
+  color: var(--c-ink);
+  font-family: var(--f-sans);
+  font-size: var(--fs-lg); /* ≥16px: iPhone yakınlaştırmasın */
+  padding: 0;
+  border-radius: 0;
+  outline: none;
+}
+.inp::placeholder {
+  color: var(--c-ink-2);
+}
+.inp:focus {
+  border-bottom: 2px solid var(--c-ink);
+}
+.inp:focus-visible {
+  outline: none;
+}
+.hint {
+  font-size: var(--fs-sm);
+  color: var(--c-ink-2);
+  margin-top: 6px;
+}
+.err {
+  font-size: var(--fs-sm);
+  color: var(--c-ink);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+/* liste satırı */
+.br {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: var(--btn-h);
+  border-bottom: 1px solid var(--c-line);
+}
+
+/* üst çubuk */
+.bar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 0 var(--gutter);
+  border-bottom: 1px solid var(--c-line);
+  flex: 0 0 auto;
+  gap: var(--sp-2);
+}
+.bar .h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ikon buton */
+.ib {
+  width: var(--touch);
+  height: var(--touch);
+  border: 0;
+  background: none;
+  color: var(--c-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: var(--radius);
+  flex: 0 0 auto;
+}
+
+/* altta sabit buton alanı */
+.dock {
+  position: sticky;
+  bottom: 0;
+  padding: var(--sp-3) var(--gutter);
+  padding-bottom: calc(var(--sp-3) + var(--safe-bottom));
+  background: var(--c-ground);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 5;
+}
+.dock.above-tabs {
+  padding-bottom: var(--sp-3);
+  bottom: calc(60px + var(--safe-bottom));
+}
+
+.center-msg {
+  padding: var(--sp-7) var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  align-items: flex-start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

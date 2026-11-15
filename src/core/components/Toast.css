@@ -1,0 +1,18 @@
+.toast-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(140px + var(--safe-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 60;
+}
+.toast {
+  display: inline-block;
+  background: var(--c-ink);
+  color: var(--c-on-accent);
+  font-size: var(--fs-sm);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+}

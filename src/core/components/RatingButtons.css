@@ -1,0 +1,28 @@
+.rate {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.r {
+  height: 48px;
+  border: 1px solid var(--c-ink-2);
+  background: var(--c-surface);
+  border-radius: var(--radius);
+  font: 500 var(--fs-lg) var(--f-mono);
+  color: var(--c-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.r.sel {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: var(--c-on-accent);
+}
+.r.out {
+  background: var(--c-ink);
+  border-color: var(--c-ink);
+  color: var(--c-on-accent);
+}

@@ -1,0 +1,23 @@
+.attend {
+  border-top: 1px solid var(--c-line);
+  padding-top: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.attend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.seg {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+/* "Gelemem" seçiliyken kırmızı değil mürekkep: kırmızı vurgu sadece "Geliyorum" için */
+.seg .seg-no[aria-pressed='true'] {
+  background: var(--c-ink);
+  border-color: var(--c-ink);
+  color: var(--c-on-accent);
+}

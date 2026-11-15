@@ -1,0 +1,17 @@
+.bring-name {
+  overflow-wrap: anywhere;
+}
+.bring-mine {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.bring-open {
+  margin-top: var(--sp-1);
+}
+.bring-add {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-3);
+  padding-top: var(--sp-3);
+}
