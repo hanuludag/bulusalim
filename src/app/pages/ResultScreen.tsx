@@ -9,7 +9,7 @@ import { formatRatio, formatShortDay } from '../../core/format';
 import { shareToWhatsApp } from '../../core/share';
 import { TopBar } from '../../core/components/TopBar';
 import { useRoomScreen } from './useRoomScreen';
-import { IdeaWho, SlotWho } from '../components/WhoList';
+import { SlotWho } from '../components/WhoList';
 import { PlanList } from '../components/PlanList';
 import { DistributeSheet } from '../components/DistributeSheet';
 import { distribute } from '../distribute';
@@ -96,7 +96,7 @@ export default function ResultScreen() {
             <PlanList result={r} detail />
           </div>
         )}
-        {(r.general.length > 0 || r.plan.length === 0) && <div className="win">
+        {(r.winnerIdea || r.plan.length === 0) && <div className="win">
           <h1 className="h1">{w ? (w.place ? `${w.name} · ${w.place}` : w.name) : copy.result.noIdea}</h1>
           {b ? (
             <p className="win-time mono">
@@ -140,7 +140,6 @@ export default function ResultScreen() {
             {copy.result.distribute}
           </button>
         )}
-        {r.ideas.length > 0 && <IdeaWho snap={snap} ideas={r.ideas} title={copy.result.ideasTitle} />}
         <SlotWho snap={snap} slots={bestTimes} title={copy.result.timesTitle} />
         {nav}
       </section>

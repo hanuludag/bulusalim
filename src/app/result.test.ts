@@ -123,3 +123,34 @@ describe('gün gün plan', () => {
     expect(r.winnerIdea?.id).toBe('x');
   });
 });
+
+describe('gün oylaması', () => {
+  it('açıkken günü olmayan fikir en çok gün oyu aldığı zamana gider; kapalıyken gitmez', () => {
+    const s = makeSnap(['A', 'B', 'C']);
+    addIdea(s, 'balik', 1);
+    vote(s, 'm0', 'balik', 'yes');
+    s.placements = [
+      { roomId: 'r', memberId: 'm0', ideaId: 'balik', day: '2026-11-15', slot: 'aksam' },
+      { roomId: 'r', memberId: 'm1', ideaId: 'balik', day: '2026-11-15', slot: 'aksam' },
+      { roomId: 'r', memberId: 'm2', ideaId: 'balik', day: '2026-11-14', slot: 'gunduz' },
+    ];
+    expect(computeResult(s).plan).toHaveLength(0); // kapalı
+    s.room.dayVoting = true;
+    const r = computeResult(s);
+    expect(r.plan.map((o) => [o.day, o.slot, o.winner?.id])).toEqual([['2026-11-15', 'aksam', 'balik']]);
+    expect(r.general).toHaveLength(0);
+    expect(r.ideas[0].dayVote).toEqual({ day: '2026-11-15', slot: 'aksam', count: 2 });
+  });
+
+  it('eşit gün oyunda daha çok kişinin boş olduğu zaman kazanır', () => {
+    const s = makeSnap(['A', 'B']);
+    s.room.dayVoting = true;
+    addIdea(s, 'x', 1);
+    s.placements = [
+      { roomId: 'r', memberId: 'm0', ideaId: 'x', day: '2026-11-14', slot: 'gunduz' },
+      { roomId: 'r', memberId: 'm1', ideaId: 'x', day: '2026-11-16', slot: 'aksam' },
+    ];
+    free(s, 'm0', '2026-11-16', 'aksam');
+    expect(computeResult(s).ideas[0].dayVote).toEqual({ day: '2026-11-16', slot: 'aksam', count: 1 });
+  });
+});

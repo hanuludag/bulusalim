@@ -1,9 +1,9 @@
 // "Kim?" listeleri: satıra dokununca isimler açılır.
-// SlotWho: zaman dilimleri (kim boş). IdeaWho: fikirler (kim onayladı / onaylamadı).
+// SlotWho: zaman dilimleri (kim boş).
 import { useState } from 'react';
 import { copy } from '../copy';
 import { slotLower } from '../slots';
-import type { IdeaResult, SlotResult } from '../result';
+import type { SlotResult } from '../result';
 import type { RoomSnapshot } from '../types';
 import { formatDate } from '../../core/format';
 import './WhoList.css';
@@ -40,25 +40,6 @@ export function SlotWho({ snap, slots, title }: { snap: RoomSnapshot; slots: Slo
           ))}
         </ul>
       )}
-    </section>
-  );
-}
-
-export function IdeaWho({ snap, ideas, title }: { snap: RoomSnapshot; ideas: IdeaResult[]; title: string }) {
-  const by = (ideaId: string, value: 'yes' | 'no') =>
-    names(snap, snap.votes.filter((v) => v.ideaId === ideaId && v.value === value).map((v) => v.memberId));
-  return (
-    <section className="wl">
-      <h2 className="sec s13 wl-h">{title}</h2>
-      <ul>
-        {ideas.map(({ idea, yes, no }) => (
-          <Row key={idea.id} title={idea.place ? `${idea.name} · ${idea.place}` : idea.name} right={`✓${yes} ✗${no}`}>
-            {yes > 0 && <p>{copy.who.yes(by(idea.id, 'yes'))}</p>}
-            {no > 0 && <p className="sec">{copy.who.no(by(idea.id, 'no'))}</p>}
-            {yes + no === 0 && <p className="sec">—</p>}
-          </Row>
-        ))}
-      </ul>
     </section>
   );
 }

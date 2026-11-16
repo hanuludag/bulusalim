@@ -15,12 +15,15 @@ export interface DataStore {
   deleteIdea(ideaId: ID, memberId: ID): Promise<void>;
   /** Fikrin zamanını değiştir (day+slot ya da ikisi null = herhangi bir gün). Ekleyen ya da kurucu. */
   moveIdea(ideaId: ID, memberId: ID, day: string | null, slot: Slot | null): Promise<Idea>;
+  /** Gün oyu ver/değiştir; day null = oyu kaldır. Sadece gün oylaması açıkken ve günü olmayan fikirde. */
+  setPlacement(input: { roomId: ID; memberId: ID; ideaId: ID; day: string | null; slot: Slot | null }): Promise<void>;
   // --- Sadece oda kurucusu (memberId = room.createdBy) ---
   renameRoom(roomId: ID, memberId: ID, name: string): Promise<void>;
   /** 1–14 gün. Çıkarılan günlerdeki saat seçimleri silinir. */
   setDays(roomId: ID, memberId: ID, days: string[]): Promise<void>;
   /** Üyeyi ve cevaplarını siler; eklediği fikirler kalır. Kurucu kendini çıkaramaz. */
   removeMember(roomId: ID, memberId: ID, targetId: ID): Promise<void>;
+  setDayVoting(roomId: ID, memberId: ID, on: boolean): Promise<void>;
   /** Odayı herkes için tamamen siler. */
   deleteRoom(roomId: ID, memberId: ID): Promise<void>;
   /** value null = cevabı kaldır. */

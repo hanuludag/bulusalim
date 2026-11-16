@@ -32,6 +32,10 @@ Testler: `npm test` · Yayın paketi: `npm run build` (çıktı `dist/`, Netlify
 **Gün gün plan:** Fikir eklerken gün + gündüz/akşam seçilir (ya da "Herhangi bir gün"). Her gün+dilim kendi oylamasını yapar:
 en çok onaylanan o zamanın etkinliği olur (en az 1 onay). Bir odada her güne ayrı etkinlik konabilir.
 
+**Gün oylaması (kurucu ⋯ menüsünden açar/kapatır):** Açıkken herkes, günü belli olmayan fikirlerin altındaki
+"Hangi gün olsun?" ile gün+dilim oyu verir. En çok oyu alan zaman o fikrin zamanı olur (eşitlikte daha çok kişinin boş olduğu,
+sonra erken gün); o zamanda birden fazla fikir varsa onaylarla kazanan seçilir. Kapalıyken gün oyları sayılmaz (silinmez).
+
 **Buluşmaları günlere dağıt (kurucu, isteğe bağlı):** Sonuç ekranında, günü olmayan ve onay alan fikirler varsa çıkar.
 Önce öneri gösterilir (en çok onaylanan → en çok kişinin boş olduğu, henüz etkinliği olmayan zaman), "Dağıt" ile kaydedilir
 (`src/app/distribute.ts`). Sonra fikir ⋯ menüsünden "Zamanını değiştir" ile tek tek oynanabilir.
@@ -40,10 +44,11 @@ en çok onaylanan o zamanın etkinliği olur (en az 1 onay). Bir odada her güne
 
 **İki görünüm:**
 - **Odayı kuran:** ayrıntılı ekranlar (Fikirler gün gün gruplu · Zaman · Sonuç), sayılar, "Kim?" listeleri, ⋯ oda menüsü.
-- **Linkten giren arkadaş:** tek sayfa `/r/:id/cevap` → 1. fikirlere ✓/✗, 2. boş saatlere dokun, Bitti → `/r/:id/plan`
-  (sadece plan, isim ve sayı yok, "Cevaplarımı düzenle"). Odaya tekrar girince cevap verdiyse plana, vermediyse cevap sayfasına gider.
+- **Linkten giren arkadaş:** tek sayfa `/r/:id/cevap` → 1. fikirlere ✓/✗ (gün oylaması açıksa gün oyu), 2. boş saatlere dokun, Bitti → `/r/:id/plan`.
+  Küçük yazıyla görür: fikrin altında "✓2 Ali, Veli · ✗1 Ayşe", saat kutularında kaç kişi boş, altta kim cevap verdi / bekleniyor,
+  planda onay ve boş kişi sayısı. Menü, üye yönetimi ve dağıtma yok. Odaya tekrar girince cevap verdiyse plana, vermediyse cevap sayfasına gider.
 
-**Kim ne dedi:** Fikirlerde "Kim?" → ✓ onaylayanlar, ✗ onaylamayanlar. Zaman ve Sonuç'ta satıra dokununca o saatte boş olanlar.
+**Kim ne dedi:** Fikrin altında her zaman küçük tek satır: ✓ onaylayanlar, ✗ onaylamayanlar. Zaman ve Sonuç'ta satıra dokununca o saatte boş olanlar.
 
 **Oda menüsü (⋯):** herkes: Odalarım, Yeni oda kur, üye listesi. Sadece **odayı kuran**: oda adını değiştir, günleri değiştir
 (çıkarılan günlerin saat seçimleri silinir), üye çıkar (onayları/saatleri silinir, fikirleri kalır), başkasının fikrini sil, **odayı sil** (herkes için).

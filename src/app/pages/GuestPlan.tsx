@@ -21,14 +21,15 @@ export default function GuestPlan() {
   const { snap, shareFirst, link } = ctx;
   const w = r.winnerIdea;
   const b = r.bestSlot;
-  const showGeneral = r.general.length > 0 || r.plan.length === 0;
+  const names = (ids: string[]) => snap.members.filter((m) => ids.includes(m.id)).map((m) => m.name).join(', ');
+  const showGeneral = !!w || r.plan.length === 0; // plan varken onaysız genel fikirler kafa karıştırmasın
 
   return (
     <main className="page">
       <GuestBar title={snap.room.name} onShare={shareFirst} />
       <section className="pad res">
         <h1 className="h1">{copy.guest.planTitle}</h1>
-        {r.plan.length > 0 && <PlanList result={r} />}
+        {r.plan.length > 0 && <PlanList result={r} detail />}
         {showGeneral && (
           <div className={`win${w || b ? '' : ' neutral'}`}>
             {w || b ? (
@@ -45,7 +46,10 @@ export default function GuestPlan() {
             )}
           </div>
         )}
-        <p className={r.isFinal ? 'b' : 'sec'}>{r.isFinal ? copy.guest.planFinal : copy.guest.planPartial(r.voters.length, r.totalMembers)}</p>
+        <div>
+          <p className={r.isFinal ? 'b' : 'sec'}>{r.isFinal ? copy.guest.planFinal : copy.guest.planPartial(r.voters.length, r.totalMembers)}</p>
+          {!r.isFinal && <p className="sec s13">{copy.who.waiting(names(r.waiting))}</p>}
+        </div>
         <button className="btn" type="button" onClick={() => void shareToWhatsApp(resultText(snap, r, link))}>
           {copy.guest.sharePlan}
         </button>

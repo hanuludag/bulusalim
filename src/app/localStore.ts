@@ -6,13 +6,13 @@ import { cleanName } from '../core/names';
 import { MAX_DAYS, SaveError, type DataStore } from './store';
 import { normalizeDays, roomDays } from './days';
 import { weekDays } from '../core/format';
-import type { Availability, ID, Idea, Member, Room, RoomSnapshot, Vote } from './types';
+import type { Availability, ID, Idea, Member, Placement, Room, RoomSnapshot, Vote } from './types';
 
 export const DB_KEY = 'bs:db:v2';
 const OLD_KEYS = ['bs:db:v1'];
 
-export interface DB { rooms: Room[]; members: Member[]; ideas: Idea[]; votes: Vote[]; availability: Availability[] }
-const emptyDb = (): DB => ({ rooms: [], members: [], ideas: [], votes: [], availability: [] });
+export interface DB { rooms: Room[]; members: Member[]; ideas: Idea[]; votes: Vote[]; availability: Availability[]; placements: Placement[] }
+const emptyDb = (): DB => ({ rooms: [], members: [], ideas: [], votes: [], availability: [], placements: [] });
 
 export interface LocalStoreOptions { storage?: Storage; sync?: Sync; now?: () => number; id?: () => string }
 export interface LocalStore extends DataStore {
@@ -129,6 +129,7 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         ideas: byRoom(db.ideas).sort((a, b) => a.createdAt - b.createdAt),
         votes: byRoom(db.votes),
         availability: byRoom(db.availability),
+        placements: byRoom(db.placements),
       } satisfies RoomSnapshot;
     },
 
@@ -178,6 +179,7 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         if (!idea || (idea.addedBy !== memberId && room?.createdBy !== memberId)) throw new SaveError('idea-not-found');
         db.ideas = db.ideas.filter((i) => i.id !== ideaId);
         db.votes = db.votes.filter((v) => v.ideaId !== ideaId);
+        db.placements = db.placements.filter((p) => p.ideaId !== ideaId);
       });
     },
 
@@ -198,7 +200,26 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         if (day && !roomDays(room).includes(day)) throw new SaveError('day-not-in-room');
         idea.day = day;
         idea.slot = slot;
+        if (day) db.placements = db.placements.filter((p) => p.ideaId !== ideaId); // artık günü var
         return { ...idea };
+      });
+    },
+
+    async setPlacement({ roomId, memberId, ideaId, day, slot }) {
+      await write(roomId, (db) => {
+        db.placements = db.placements.filter((p) => !(p.memberId === memberId && p.ideaId === ideaId));
+        if (!day) return;
+        const room = mustRoom(db, roomId);
+        if (!room.dayVoting) throw new SaveError('day-voting-off');
+        if (!slot || !roomDays(room).includes(day)) throw new SaveError('day-not-in-room');
+        if (!db.ideas.some((i) => i.id === ideaId && i.roomId === roomId && !i.day)) throw new SaveError('idea-not-found');
+        db.placements.push({ roomId, memberId, ideaId, day, slot });
+      });
+    },
+
+    async setDayVoting(roomId, memberId, on) {
+      await write(roomId, (db) => {
+        mustCreator(db, roomId, memberId).dayVoting = on;
       });
     },
 
@@ -216,6 +237,7 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         room.days = list;
         room.startDate = list[0];
         db.availability = db.availability.filter((a) => a.roomId !== roomId || list.includes(a.day));
+        db.placements = db.placements.filter((p) => p.roomId !== roomId || list.includes(p.day));
         db.ideas.forEach((i) => {
           if (i.roomId === roomId && i.day && !list.includes(i.day)) {
             i.day = null; // çıkarılan günün fikirleri "herhangi bir gün"e düşer
@@ -232,6 +254,7 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         db.members = db.members.filter((m) => !(m.id === targetId && m.roomId === roomId));
         db.votes = db.votes.filter((v) => v.memberId !== targetId);
         db.availability = db.availability.filter((a) => a.memberId !== targetId);
+        db.placements = db.placements.filter((p) => p.memberId !== targetId);
       });
     },
 
@@ -244,6 +267,7 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         db.ideas = keep(db.ideas);
         db.votes = keep(db.votes);
         db.availability = keep(db.availability);
+        db.placements = keep(db.placements);
       });
     },
 

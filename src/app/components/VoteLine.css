@@ -1,0 +1,12 @@
+/* Küçük cevap satırı ve gün oyu (fikir satırlarında) */
+.vline {
+  margin-top: var(--sp-2);
+  overflow-wrap: anywhere;
+}
+.dv {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--sp-3);
+  margin-top: var(--sp-1);
+}

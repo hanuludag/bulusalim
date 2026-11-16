@@ -115,6 +115,16 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       return idea;
     },
 
+    async setPlacement({ roomId, memberId, ideaId, day, slot }) {
+      await rpc('bs_set_placement', { p_room: roomId, p_member: memberId, p_idea: ideaId, p_day: day, p_slot: day ? slot : null });
+      changed(roomId);
+    },
+
+    async setDayVoting(roomId, memberId, on) {
+      await rpc('bs_set_day_voting', { p_room: roomId, p_member: memberId, p_on: on });
+      changed(roomId);
+    },
+
     async renameRoom(roomId, memberId, name) {
       await rpc('bs_rename_room', { p_room: roomId, p_member: memberId, p_name: name });
       changed(roomId);

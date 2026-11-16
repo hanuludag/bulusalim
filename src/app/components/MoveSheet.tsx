@@ -7,23 +7,35 @@ import type { OccasionPick } from './IdeaSheet';
 import { formatDate } from '../../core/format';
 import { Sheet } from '../../core/components/Sheet';
 
-export function MoveSheet({ idea, days, onClose, onSave }: { idea: Idea | null; days: string[]; onClose: () => void; onSave: (o: OccasionPick) => Promise<void> }) {
-  if (!idea) return null;
-  return <Body key={idea.id} idea={idea} days={days} onClose={onClose} onSave={onSave} />;
+interface Props {
+  idea: Idea; days: string[]; onClose: () => void; onSave: (o: OccasionPick) => Promise<void>;
+  /** Başlangıç seçimi (verilmezse fikrin kendi zamanı) */
+  initial?: OccasionPick;
+  /** Başlık (verilmezse fikrin adı) */
+  title?: string;
+  /** "Gün yok" düğmesinin yazısı (verilmezse "Herhangi bir gün") */
+  anyLabel?: string;
 }
 
-function Body({ idea, days, onClose, onSave }: { idea: Idea; days: string[]; onClose: () => void; onSave: (o: OccasionPick) => Promise<void> }) {
+// Fikrin zamanını seçme paneli. Hem "Zamanını değiştir" hem gün oyu için kullanılır.
+export function MoveSheet({ idea, ...rest }: Omit<Props, 'idea'> & { idea: Idea | null }) {
+  if (!idea) return null;
+  return <Body key={idea.id} idea={idea} {...rest} />;
+}
+
+function Body({ idea, days, onClose, onSave, initial, title, anyLabel }: Props) {
   const id = useId();
-  const [o, setO] = useState<OccasionPick>(idea.day && idea.slot ? { day: idea.day, slot: idea.slot } : null);
+  const [o, setO] = useState<OccasionPick>(initial !== undefined ? initial : idea.day && idea.slot ? { day: idea.day, slot: idea.slot } : null);
   const [busy, setBusy] = useState(false);
   return (
     <Sheet open onClose={onClose} labelledBy={id}>
-      <h2 id={id} className="h1">{idea.name}</h2>
+      <h2 id={id} className="h1">{title ?? idea.name}</h2>
+      {title && <p className="sec">{idea.name}</p>}
       <div className="occ">
         <p className="sec s13">{copy.occasion.dayLabel}</p>
         <div className="occ-row">
           <button type="button" className="btn2 sm" aria-pressed={!o} onClick={() => setO(null)}>
-            {copy.occasion.any}
+            {anyLabel ?? copy.occasion.any}
           </button>
           {days.map((d) => (
             <button key={d} type="button" className="btn2 sm" aria-pressed={o?.day === d} onClick={() => setO({ day: d, slot: o?.slot ?? 'gunduz' })}>

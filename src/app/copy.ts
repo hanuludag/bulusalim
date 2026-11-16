@@ -90,9 +90,21 @@ export const copy = {
     thanks: 'Cevapların kaydedildi.',
     myRooms: 'Odalarım',
   },
+  dayVote: {
+    ask: 'Hangi gün olsun?',
+    mine: (when: string) => `Gün oyun: ${when}`,
+    top: (when: string, n: number) => `Çoğunluk: ${when} (${n})`,
+    title: 'Hangi gün olsun?',
+    remove: 'Oyumu kaldır',
+    menuOn: 'Gün oylaması: açık',
+    menuOff: 'Gün oylaması: kapalı',
+    menuSub: 'Açıkken herkes, günü belli olmayan fikirler için gün seçer. En çok seçilen gün o fikrin günü olur.',
+  },
   who: {
-    show: 'Kim?',
-    hide: 'Gizle',
+    line: (yes: number, yesNames: string, no: number, noNames: string) =>
+      [yes ? `✓${yes} ${yesNames}` : '', no ? `✗${no} ${noNames}` : ''].filter(Boolean).join(' · '),
+    answered: (names: string) => `Cevap verdi: ${names}`,
+    waiting: (names: string) => `Bekleniyor: ${names}`,
     yes: (names: string) => `✓ ${names}`,
     no: (names: string) => `✗ ${names}`,
     free: (n: number) => `${n} kişi boş`,
@@ -155,7 +167,6 @@ export const copy = {
     next: 'Sonucu gör →',
     // ekran okuyucu: "Cmt 15 Kas gündüz, 4 kişi boş, sen seçtin"
     cellLabel: (date: string, slot: string, n: number, mine: boolean) => `${date} ${slot}, ${n} kişi boş${mine ? ', sen seçtin' : ''}`,
-    cellLabelSimple: (date: string, slot: string, mine: boolean) => `${date} ${slot}${mine ? ', boşum' : ''}`,
   },
   result: {
     emptyTitle: 'Henüz cevap yok.',
@@ -168,7 +179,6 @@ export const copy = {
     remind: 'Gruba hatırlat',
     final: 'Kesin sonuç ✓',
     share: 'Sonucu paylaş',
-    ideasTitle: 'Bütün fikirler',
     planTitle: 'Gün gün plan',
     shareAnyway: 'Şimdiki sonucu paylaş',
     copyLink: 'Linki kopyala',

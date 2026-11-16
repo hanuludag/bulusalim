@@ -17,6 +17,8 @@ import { GuestBar } from '../components/GuestBar';
 import { IdeaSheet, type IdeaDraft, type OccasionPick } from '../components/IdeaSheet';
 import { TimeGrid } from '../components/TimeGrid';
 import { answers } from './answers';
+import { VoteLine } from '../components/VoteLine';
+import { DayVote } from '../components/DayVote';
 import { useRoomScreen } from './useRoomScreen';
 import './guest.css';
 
@@ -28,7 +30,9 @@ export default function GuestScreen() {
   const result = useMemo(() => (ctx ? computeResult(ctx.snap) : null), [ctx]);
   if (!ctx || !result) return gate;
   const { snap, me, refresh, shareFirst } = ctx;
-  const { myVote, vote, toggle } = answers(ctx);
+  const { myVote, vote, toggle, myPlacement, placeVote, voters } = answers(ctx);
+  const days = roomDays(snap.room);
+  const dayVotes = new Map(result.ideas.map((r) => [r.idea.id, r.dayVote]));
   const groups = groupIdeas(snap);
   const hasDays = groups.days.some((g) => g.slots.length > 0);
 
@@ -46,6 +50,12 @@ export default function GuestScreen() {
   const add = (name: string, extra: { place?: string; note?: string; suggestionId?: string }, o: OccasionPick) =>
     run(() => store.addIdea(snap.room.id, { name, ...extra, addedBy: me.id, day: o?.day ?? null, slot: o?.slot ?? null }));
 
+  const names = (ids: string[]) => snap.members.filter((m) => ids.includes(m.id)).map((m) => m.name).join(', ');
+  const answeredLine = [
+    result.voters.length ? copy.who.answered(names(result.voters)) : '',
+    result.waiting.length ? copy.who.waiting(names(result.waiting)) : '',
+  ].filter(Boolean).join(' · ');
+
   const row = (idea: Idea) => {
     const v = myVote(idea.id);
     return (
@@ -54,6 +64,10 @@ export default function GuestScreen() {
           <p className="m">{idea.name}</p>
           {idea.place && <p className="sec s13">{idea.place}</p>}
           {idea.note && <p className="sec s13">{idea.note}</p>}
+          <VoteLine yes={voters(idea.id, 'yes')} no={voters(idea.id, 'no')} />
+          {snap.room.dayVoting && !idea.day && (
+            <DayVote idea={idea} days={days} mine={myPlacement(idea.id)} top={dayVotes.get(idea.id)} onPick={(o) => placeVote(idea, o)} />
+          )}
         </div>
         <div className="g-votes" role="group" aria-label={idea.name}>
           <button type="button" className={`g-v${v === 'yes' ? ' yes' : ''}`} aria-pressed={v === 'yes'} aria-label={copy.guest.yes} onClick={() => void vote(idea, 'yes')}>
@@ -68,7 +82,7 @@ export default function GuestScreen() {
   };
 
   return (
-    <main className="page has-dock">
+    <main className="page has-dock g-page">
       <GuestBar title={snap.room.name} onShare={shareFirst} />
 
       <section className="g-step">
@@ -106,11 +120,12 @@ export default function GuestScreen() {
           <p className="sec">{copy.guest.step2Sub}</p>
         </div>
         <div className="pad time-wrap">
-          <TimeGrid result={result} snap={snap} meId={me.id} onToggle={(d, s) => void toggle(d, s)} simple />
+          <TimeGrid result={result} snap={snap} meId={me.id} onToggle={(d, s) => void toggle(d, s)} />
         </div>
       </section>
 
       <Dock>
+        <p className="sec s13 g-who">{answeredLine}</p>
         <button
           className="btn"
           type="button"
@@ -127,7 +142,7 @@ export default function GuestScreen() {
         open={sheet}
         editing={null}
         ideas={snap.ideas}
-        days={roomDays(snap.room)}
+        days={days}
         occasion={null}
         onClose={() => setSheet(false)}
         onSubmit={(d: IdeaDraft) => add(d.name, { place: d.place, note: d.note, suggestionId: d.suggestionId ?? undefined }, d.occasion)}

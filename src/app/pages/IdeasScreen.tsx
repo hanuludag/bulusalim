@@ -14,6 +14,9 @@ import { IdeaRow } from '../components/IdeaRow';
 import { IdeaSheet, type IdeaDraft, type OccasionPick } from '../components/IdeaSheet';
 import { groupIdeas } from '../groups';
 import { MoveSheet } from '../components/MoveSheet';
+import { DayVote } from '../components/DayVote';
+import { computeResult } from '../result';
+import { answers } from './answers';
 import { roomDays } from '../days';
 import { slotHours, slotLabel } from '../slots';
 import { formatDate } from '../../core/format';
@@ -90,6 +93,9 @@ export default function IdeasScreen() {
 
   const hasIdeas = snap.ideas.length > 0;
   const groups = groupIdeas(snap);
+  const days = roomDays(snap.room);
+  const a = answers(ctx);
+  const dayVotes = new Map(computeResult(snap).ideas.map((r) => [r.idea.id, r.dayVote]));
   const row = (idea: Idea) => (
     <IdeaRow
       key={idea.id}
@@ -104,6 +110,11 @@ export default function IdeasScreen() {
       onEdit={() => setSheet({ open: true, editing: idea })}
       onDelete={() => setToDelete(idea)}
       onMove={() => setToMove(idea)}
+      extra={
+        snap.room.dayVoting && !idea.day ? (
+          <DayVote idea={idea} days={days} mine={a.myPlacement(idea.id)} top={dayVotes.get(idea.id)} onPick={(o) => a.placeVote(idea, o)} />
+        ) : null
+      }
     />
   );
   const showDock = hasMyVote(snap, me.id);
@@ -129,11 +140,11 @@ export default function IdeasScreen() {
         <div className="idea-groups">
           {groups.general.length > 0 && (
             <section>
-              {groups.days.length > 0 && <h2 className="pad grp-day">{copy.occasion.any}</h2>}
+              {groups.days.some((g) => g.slots.length > 0) && <h2 className="pad grp-day">{copy.occasion.any}</h2>}
               <ul className="idea-list">{groups.general.map(row)}</ul>
             </section>
           )}
-          {groups.days.map((g) => (
+          {groups.days.filter((g) => g.slots.length > 0).map((g) => (
             <section key={g.day}>
               <h2 className="pad grp-day">{formatDate(g.day)}</h2>
               {g.slots.map((sg) => (
@@ -176,7 +187,7 @@ export default function IdeasScreen() {
         open={sheet.open}
         editing={sheet.open ? sheet.editing : null}
         ideas={snap.ideas}
-        days={roomDays(snap.room)}
+        days={days}
         occasion={sheet.open ? sheet.occasion : null}
         onClose={() => setSheet({ open: false })}
         onSubmit={save}
@@ -193,7 +204,7 @@ export default function IdeasScreen() {
       />
       <MoveSheet
         idea={toMove}
-        days={roomDays(snap.room)}
+        days={days}
         onClose={() => setToMove(null)}
         onSave={async (o) => {
           const idea = toMove;

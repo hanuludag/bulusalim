@@ -7,6 +7,8 @@ export type ScreenKey = 'fikirler' | 'zaman' | 'sonuc' | 'cevap' | 'plan';
 export interface Room {
   id: ID; name: string; startDate: string /* YYYY-MM-DD, ilk gün */;
   days?: string[] /* buluşulabilecek günler, sıralı; boş/yoksa startDate'ten 7 gün (eski odalar) */;
+  /** Gün oylaması: açıkken herkes günü olmayan fikirler için gün+dilim oyu verir (kurucu açar/kapatır) */
+  dayVoting?: boolean;
   createdBy: ID; createdAt: number;
 }
 export interface Member { id: ID; roomId: ID; name: string; createdAt: number }
@@ -19,4 +21,6 @@ export interface Idea {
 /** Bir üyenin bir fikre cevabı. Kayıt yoksa: cevap yok. */
 export interface Vote { roomId: ID; memberId: ID; ideaId: ID; value: VoteValue }
 export interface Availability { roomId: ID; memberId: ID; day: string /* YYYY-MM-DD */; slot: Slot }
-export interface RoomSnapshot { room: Room; members: Member[]; ideas: Idea[]; votes: Vote[]; availability: Availability[] }
+/** Gün oyu: bir üyenin, günü olmayan bir fikir için istediği gün+dilim */
+export interface Placement { roomId: ID; memberId: ID; ideaId: ID; day: string; slot: Slot }
+export interface RoomSnapshot { room: Room; members: Member[]; ideas: Idea[]; votes: Vote[]; availability: Availability[]; placements?: Placement[] }

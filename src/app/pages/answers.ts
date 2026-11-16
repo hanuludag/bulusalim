@@ -1,6 +1,7 @@
 // Cevap verme işlemleri (iyimser güncelleme ile): fikre ✓/✗, saate dokun, fikir öner.
 import { store } from '../runtime';
 import type { Idea, RoomSnapshot, Slot, VoteValue } from '../types';
+import type { OccasionPick } from '../components/IdeaSheet';
 import type { RoomCtx } from './useRoomScreen';
 
 export function answers({ snap, me, mutate }: RoomCtx) {
@@ -33,5 +34,28 @@ export function answers({ snap, me, mutate }: RoomCtx) {
     );
   }
 
-  return { myVote, vote, toggle };
+  const myPlacement = (ideaId: string): OccasionPick => {
+    const p = (snap.placements ?? []).find((x) => x.ideaId === ideaId && x.memberId === me.id);
+    return p ? { day: p.day, slot: p.slot } : null;
+  };
+
+  /** Gün oyu ver (o = null → oyu kaldır) */
+  async function placeVote(idea: Idea, o: OccasionPick) {
+    await mutate(
+      (s) => ({
+        ...s,
+        placements: [
+          ...(s.placements ?? []).filter((p) => !(p.ideaId === idea.id && p.memberId === me.id)),
+          ...(o ? [{ roomId: s.room.id, memberId: me.id, ideaId: idea.id, day: o.day, slot: o.slot }] : []),
+        ],
+      }),
+      () => store.setPlacement({ roomId: snap.room.id, memberId: me.id, ideaId: idea.id, day: o?.day ?? null, slot: o?.slot ?? null }),
+    );
+  }
+
+  /** Bir fikrin ✓ ve ✗ diyenlerinin adları (üye sırasıyla) */
+  const voters = (ideaId: string, value: VoteValue) =>
+    snap.members.filter((m) => snap.votes.some((v) => v.ideaId === ideaId && v.memberId === m.id && v.value === value)).map((m) => m.name);
+
+  return { myVote, vote, toggle, myPlacement, placeVote, voters };
 }

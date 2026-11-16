@@ -46,3 +46,41 @@
   flex-direction: column;
   gap: var(--sp-4);
 }
+
+.rm-toggle {
+  padding: var(--sp-3) 0;
+  gap: var(--sp-3);
+}
+.rm-sub {
+  display: block;
+  font-weight: 400;
+  margin-top: 2px;
+}
+.rm-sw {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  border: 1px solid var(--c-ink-2);
+  background: var(--c-surface);
+  position: relative;
+}
+.rm-sw::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--c-ink-2);
+  transition: transform 0.15s;
+}
+.rm-sw.on {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+.rm-sw.on::after {
+  transform: translateX(18px);
+  background: var(--c-on-accent);
+}

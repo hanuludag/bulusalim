@@ -1,11 +1,14 @@
 // Sonuç hesabı. Saf fonksiyon: aynı girdi → aynı çıktı. Bütün ekranlar sonucu buradan alır.
 // Fikirler bir güne+dilime ("etkinlik zamanı") ait olabilir: her zamanın kendi kazananı olur → plan.
-// Günü olmayan fikirler ("herhangi bir gün") eski usul: tek kazanan + en iyi zaman.
+// Gün oylaması açıksa günü olmayan fikir, en çok gün oyu aldığı zamana gider.
+// Hâlâ günü olmayan fikirler ("herhangi bir gün") eski usul: tek kazanan + en iyi zaman.
 import { roomDays } from './days';
 import { SLOTS } from './slots';
 import type { ID, Idea, RoomSnapshot, Slot, Vote } from './types';
 
-export interface IdeaResult { idea: Idea; yes: number; no: number }
+/** Gün oylamasında bir fikrin en çok oy alan zamanı */
+export interface DayVote { day: string; slot: Slot; count: number }
+export interface IdeaResult { idea: Idea; yes: number; no: number; dayVote?: DayVote | null }
 export interface SlotResult { day: string; slot: Slot; freeCount: number; freeIds: ID[] }
 /** Bir günün bir dilimi ve oraya eklenen fikirler */
 export interface Occasion extends SlotResult { ideas: IdeaResult[]; winner: Idea | null }
@@ -44,10 +47,39 @@ export function computeResult(snap: RoomSnapshot): Result {
   const voters = memberIds.filter((id) => answered.has(id));
   const waiting = memberIds.filter((id) => !answered.has(id));
 
+  // Herkesin boş olduğu kişi sayısı (gün oyu eşitliğini bozmak için)
+  const freeAt = (day: string, slot: Slot) => new Set(avail.filter((a) => a.day === day && a.slot === slot).map((a) => a.memberId)).size;
+
+  // Gün oylaması açıksa: günü olmayan fikrin zamanı = en çok gün oyu alan gün+dilim
+  // (eşitlikte daha çok kişinin boş olduğu, sonra erken gün, sonra gündüz)
+  const placements = snap.room.dayVoting ? (snap.placements ?? []).filter((p) => isMember.has(p.memberId) && daySet.has(p.day)) : [];
+  const dayVoteOf = (idea: Idea): DayVote | null => {
+    const counts = new Map<string, DayVote>();
+    placements
+      .filter((p) => p.ideaId === idea.id)
+      .forEach((p) => {
+        const k = `${p.day}|${p.slot}`;
+        const c = counts.get(k) ?? { day: p.day, slot: p.slot, count: 0 };
+        c.count++;
+        counts.set(k, c);
+      });
+    const order = (d: DayVote) => days.indexOf(d.day) * 2 + SLOTS.indexOf(d.slot);
+    return [...counts.values()].sort((a, b) => b.count - a.count || freeAt(b.day, b.slot) - freeAt(a.day, a.slot) || order(a) - order(b))[0] ?? null;
+  };
+  const occasionOf = (r: IdeaResult): { day: string; slot: Slot } | null => {
+    const i = r.idea;
+    if (i.day && i.slot && daySet.has(i.day)) return { day: i.day, slot: i.slot };
+    return r.dayVote ?? null;
+  };
+
   // Fikirler: onay çok → onaylamama az → eski önce. Eleme yok.
-  const dated = (i: Idea) => !!(i.day && i.slot && daySet.has(i.day));
-  const ideas = rank(snap.ideas.map((i) => tally(i, votes)));
-  const general = ideas.filter((r) => !dated(r.idea));
+  const ideas = rank(
+    snap.ideas.map((i) => {
+      const t = tally(i, votes);
+      return !(i.day && i.slot && daySet.has(i.day)) && snap.room.dayVoting ? { ...t, dayVote: dayVoteOf(i) } : t;
+    }),
+  );
+  const general = ideas.filter((r) => !occasionOf(r));
 
   // Zaman
   const slots: SlotResult[] = [];
@@ -57,7 +89,10 @@ export function computeResult(snap: RoomSnapshot): Result {
       const freeIds = memberIds.filter((id) => avail.some((a) => a.memberId === id && a.day === day && a.slot === slot));
       const s = { day, slot, freeCount: freeIds.length, freeIds };
       slots.push(s);
-      const here = ideas.filter((r) => dated(r.idea) && r.idea.day === day && r.idea.slot === slot);
+      const here = ideas.filter((r) => {
+        const o = occasionOf(r);
+        return o && o.day === day && o.slot === slot;
+      });
       if (here.length) plan.push({ ...s, ideas: here, winner: winnerOf(here) });
     }),
   );

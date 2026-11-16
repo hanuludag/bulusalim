@@ -70,15 +70,4 @@
   color: var(--c-on-accent);
 }
 
-.who {
-  margin-top: var(--sp-2);
-}
-.who-btn {
-  margin-left: 0;
-}
-.who-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow-wrap: anywhere;
-}
+
