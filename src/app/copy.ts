@@ -1,35 +1,27 @@
-// EKRANDAKİ BÜTÜN METİNLER (§6, §21a). Bileşenlerde başka Türkçe metin olmaz.
-// {…} değişkenli metinler fonksiyon olarak yazıldı.
-
+// EKRANDAKİ BÜTÜN METİNLER (v2). Bileşenlerde başka Türkçe metin olmaz (test paneli hariç).
 export const copy = {
   common: {
     logo: 'buluşalım',
     loading: 'Yükleniyor…',
     offline: 'Bağlantı yok. Tekrar dene.',
-    saved: 'Kaydedildi ✓',
     saveFailed: 'Kaydedilemedi. Tekrar dene.',
     crashed: 'Bir şey ters gitti. Sayfayı yenile.',
     roomNotFound: 'Oda bulunamadı. Linki kontrol et.',
-    goHome: 'Ana sayfa',
+    goHome: 'Ana sayfaya dön',
     copied: 'Kopyalandı ✓',
-    mapOpen: 'Haritada aç ↗',
     errName: 'Adını yaz',
   },
-
   home: {
     title: 'Ne yapıyoruz, nerede, ne zaman?',
-    sub: 'Oda kur, linki gruba at. Herkes fikirleri puanlar, boş saatini seçer.',
+    sub: 'Oda kur, linki gruba at.',
     roomLabel: 'Oda adı',
-    roomHint: 'ör. Cumartesi ekibi',
-    weekLabel: 'Hafta başlangıcı',
-    weekNote: '7 gün gösterilir',
+    roomDefault: 'Buluşma',
     nameLabel: 'Adın',
     nameHint: 'ör. Emirhan',
     submit: 'Oda kur',
-    lastRoomPrefix: 'Son odan: ',
+    lastRoom: (name: string) => `Son odan: ${name}`,
     errRoom: 'Oda adını yaz',
   },
-
   ready: {
     title: 'Oda hazır',
     sub: 'Linki gruba at. Kimseye otomatik haber gitmez.',
@@ -38,50 +30,31 @@ export const copy = {
     note: 'Linki olan herkes odayı ve seçimleri görür.',
     start: 'Şimdi sen başla →',
   },
-
   join: {
     invitedBy: (name: string) => `${name} seni çağırdı`,
-    sub: 'Ne yapacağımıza, nereye gideceğimize ve ne zaman buluşacağımıza birlikte karar veriyoruz.',
-    inRoom: 'Odada: ',
-    more: (n: number) => `+${n}`,
     nameLabel: 'Adın',
     nameHint: 'ör. Kaan',
     submit: 'Katıl',
     sameName: (name: string) => `Odada zaten bir ${name} var. Sen misin?`,
     itsMe: 'Evet, benim',
     otherName: 'Başka isim yaz',
-    welcomeBack: (name: string) => `Tekrar hoş geldin, ${name}`,
   },
-
-  room: {
-    share: 'Linki paylaş',
-    tabs: { fikirler: 'Fikirler', zaman: 'Zaman', sonuc: 'Sonuç' },
-    steps: ['1 Puanla', '2 Zaman', '3 Sonuç'] as const,
-    stepSep: '·',
-  },
-
+  bar: { result: 'Sonuç', myAnswers: 'Cevaplarım', back: 'Geri', share: 'Linki paylaş' },
   ideas: {
     title: 'Fikirler',
-    ratedCount: (x: number, y: number) => `${x}/${y} puanlandı`,
-    scale: '1 = gitmem · 5 = çok isterim',
-    hintRating: '1 verirsen fikir elenir.',
-    suggestionsTitle: 'Öneriler',
-    suggestionAdd: '+ ekle',
-    suggestionAdded: 'eklendi ✓',
     add: 'Fikir ekle',
+    yes: 'Onaylıyorum',
+    no: 'Onaylamıyorum',
+    next: 'Sıradaki: Zaman →',
     empty: 'Henüz fikir yok. Önerilerden seç ya da kendin ekle.',
-    veto: 'gitmem',
-    groupRated: (n: number) => `${n} kişi puanladı`,
     menu: 'Fikir menüsü',
     edit: 'Düzenle',
     delete: 'Sil',
     deleteTitle: (name: string) => `${name} silinsin mi?`,
-    deleteSub: 'Puanlar da silinir.',
+    deleteSub: 'Onaylar da silinir.',
     cancel: 'Vazgeç',
-    next: 'Sıradaki: Zaman →',
-    rateLabel: (n: number) => `${n} puan`,
   },
-
+  suggestions: { title: 'Öneriler', add: '+ ekle', added: 'eklendi ✓' },
   ideaSheet: {
     titleAdd: 'Fikir ekle',
     titleEdit: 'Fikri düzenle',
@@ -89,9 +62,7 @@ export const copy = {
     nameHint: 'ör. Balık tutma',
     placeLabel: 'Nerede (isteğe bağlı)',
     placeHint: 'ör. Moda sahili',
-    more: '+ Harita linki veya not ekle',
-    mapLabel: 'Harita linki',
-    mapHint: 'Google Maps linkini yapıştır',
+    addNote: '+ Not ekle',
     noteLabel: 'Not',
     noteHint: 'ör. Olta getiren olsun',
     noteCount: (n: number) => `${n}/140`,
@@ -99,83 +70,33 @@ export const copy = {
     submitEdit: 'Kaydet',
     errName: 'Ne yapacağımızı yaz',
     errDuplicate: 'Bu fikir zaten listede',
-    errMap: 'Link geçerli görünmüyor',
   },
-
   time: {
     title: 'Ne zaman boşsun?',
-    sub: 'Boş olduğun kutulara dokun. Sayı = kaç kişi boş.',
-    hintHold: 'Kim boş görmek için kutuya basılı tut.',
+    sub: 'Boş olduğun kutulara dokun.',
     next: 'Sonucu gör →',
-    free: 'Boş:',
-    notYet: 'Henüz seçmedi:',
-    // ekran okuyucu etiketi: "Cmt 15 Kas öğle, 4/6 boş, sen seçtin"
-    cellLabel: (date: string, slot: string, ratio: string, mine: boolean) =>
-      `${date} ${slot}, ${ratio} boş${mine ? ', sen seçtin' : ''}`,
-    sheetTitle: (date: string, slot: string, hours: string) => `${date} · ${slot} ${hours}`,
+    // ekran okuyucu: "Cmt 15 Kas gündüz, 4 kişi boş, sen seçtin"
+    cellLabel: (date: string, slot: string, n: number, mine: boolean) => `${date} ${slot}, ${n} kişi boş${mine ? ', sen seçtin' : ''}`,
   },
-
   result: {
-    winnerAvg: (avg: string) => `ortalama ${avg}`,
-    winnerFree: (ratio: string) => `${ratio} boş`,
-    partial: (total: number, votersWithSuffix: string) =>
-      `${total} kişiden ${votersWithSuffix} cevap verdi · sonuç değişebilir`,
-    waiting: (names: string) => `Bekleniyor: ${names}`,
-    remind: 'Gruba hatırlat',
-    finalLead: 'Kesin sonuç ✓',
-    finalRest: 'Herkes cevap verdi.',
-    shareResult: 'Sonucu paylaş',
-    attendTitle: 'Sen geliyor musun?',
-    attendYes: 'Geliyorum',
-    attendNo: 'Gelemem',
-    attendCount: (x: number, y: number) => `${x}/${y} geliyor`,
-    bringTitle: 'Getirilecekler',
-    bringClaim: 'Ben getiririm',
-    bringBy: (name: string) => `${name} getiriyor`,
-    bringUnclaim: 'Vazgeç',
-    bringAdd: '+ Madde ekle',
-    bringLabel: 'Ne lazım',
-    bringHint: 'ör. Sandalye',
-    bringSubmit: 'Ekle',
-    newPlan: 'Aynı grupla yeni plan',
-    rankingTitle: 'Sıralama',
-    vetoBy: (names: string) => `gitmem: ${names}`,
-    timesTitle: 'En iyi zamanlar',
-    timeFree: (ratio: string) => `${ratio} boş`,
-    noTime: 'Henüz saat seçen yok.',
-    pickTime: 'Saat seç',
-    allOut: 'Bütün fikirler elendi. Yeni fikir ekle.',
-    addIdea: 'Fikir ekle',
     emptyTitle: 'Henüz cevap yok.',
     emptySub: 'İlk sen başla.',
-    emptyRate: 'Puanla',
-    emptyShare: 'Linki paylaş',
+    goIdeas: 'Fikirlere git',
+    noIdea: 'Henüz onaylanan fikir yok.',
+    noTime: 'Henüz saat seçen yok.',
+    partial: 'cevap verdi · sonuç değişebilir',
+    waiting: (names: string) => `Bekleniyor: ${names}`,
+    remind: 'Gruba hatırlat',
+    final: 'Kesin sonuç ✓',
+    share: 'Sonucu paylaş',
   },
-
-  newPlan: {
-    title: 'Aynı grupla yeni plan',
-    sub: 'Yeni link çıkar. Eski oda olduğu gibi kalır.',
-    label: 'Oda adı',
-    submit: 'Oda kur',
-  },
-
-  // §21a WhatsApp mesajları (emoji yok, link hep sonda)
+  // WhatsApp mesajları (emoji yok, link hep sonda)
   share: {
     first: (room: string, link: string) =>
-      `${room}: ne yapıyoruz, nerede, ne zaman? Fikirleri puanla, boş saatini seç. 1 dk sürüyor: ${link}`,
-    remind: (room: string, total: number, votersWithSuffix: string, names: string, link: string) =>
-      `${room}: ${total} kişiden ${votersWithSuffix} cevap verdi. Bekleniyor: ${names}. 1 dk sürüyor: ${link}`,
-    result: (
-      room: string,
-      idea: string,
-      place: string,
-      date: string,
-      slot: string,
-      hours: string,
-      yes: number,
-      total: number,
-      link: string,
-    ) =>
-      `${room} sonucu: ${idea}${place ? ` · ${place}` : ''}, ${date} ${slot} (${hours}). ${yes}/${total} kişi geliyor. Detay: ${link}`,
+      `${room}: ne yapıyoruz, nerede, ne zaman? Fikirleri onayla, boş zamanını seç. 1 dk sürüyor: ${link}`,
+    remind: (room: string, voters: number, total: number, names: string, link: string) =>
+      `${room}: ${voters}/${total} cevap verdi. Bekleniyor: ${names}. 1 dk sürüyor: ${link}`,
+    result: (room: string, parts: string[], link: string) =>
+      `${room} sonucu: ${parts.length ? `${parts.join(', ')}. ` : ''}Detay: ${link}`,
   },
 } as const;

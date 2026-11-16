@@ -1,36 +1,28 @@
-// Test paneli (§13): sadece geliştirme modunda (npm run dev) görünür.
-// Tasarım dışı bir geliştirici aracıdır; metinleri bilerek copy.ts'te değil.
+// Test paneli: sadece geliştirme modunda (npm run dev). Tasarım dışı geliştirici aracı; metinleri bilerek copy.ts'te değil.
 import { useEffect, useState } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
 import { device, isOnline, localStore, store } from '../runtime';
-import { DEMO_NAMES, seedDemo, type DemoKind } from '../demo';
+import { DEMO_NAMES, DEMO_ROOM_NAME, seedDemo, type DemoKind } from '../demo';
 import { SLOTS } from '../slots';
-import type { Member, RoomSnapshot, Score, Slot } from '../types';
+import type { Member, RoomSnapshot } from '../types';
 import { todayString, weekDays } from '../../core/format';
 import { findByName } from '../../core/names';
 import { Sheet } from '../../core/components/Sheet';
 import { ConfirmDialog } from '../../core/components/ConfirmDialog';
 import './TestPanel.css';
 
-const pick = <T,>(arr: readonly T[]) => arr[Math.floor(Math.random() * arr.length)];
-
 export default function TestPanel() {
   const navigate = useNavigate();
-  const match = useMatch('/r/:roomId/*');
-  const roomId = match?.params.roomId ?? null;
+  const roomId = useMatch('/r/:roomId/*')?.params.roomId ?? null;
   const [open, setOpen] = useState(false);
   const [snap, setSnap] = useState<RoomSnapshot | null>(null);
   const [latency, setLatency] = useState(localStore?.getLatency() ?? false);
-  const [busy, setBusy] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    if (!open || !roomId) {
-      setSnap(null);
-      return;
-    }
-    const load = () => void store.getRoom(roomId).then(setSnap);
+    if (!open || !roomId) return;
+    const load = () => void store.getRoom(roomId).then(setSnap).catch(() => setSnap(null));
     load();
     return store.subscribe(roomId, load);
   }, [open, roomId]);
@@ -41,11 +33,10 @@ export default function TestPanel() {
     setTimeout(() => setMsg(''), 2500);
   };
 
-  function becomeMember(m: Member | null) {
+  function become(m: Member | null) {
     if (!roomId) return;
     if (m) device.actAs(roomId, m.id);
     else device.actAsNobody(roomId);
-    // Sayfayı yeniden yükle: sekmenin kimliği değişti
     window.location.assign(`/r/${roomId}`);
   }
 
@@ -59,69 +50,46 @@ export default function TestPanel() {
 
   async function randomAnswers() {
     if (!roomId || !snap) return;
-    setBusy(true);
+    say('Çalışıyor…');
     const others = snap.members.filter((m) => m.id !== currentId);
     const days = weekDays(snap.room.startDate);
-    const cleanup: (() => Promise<unknown>)[] = [];
-    const jobs: (() => Promise<unknown>)[] = [];
+    // Önce eski cevapları temizle
+    await Promise.allSettled([
+      ...snap.votes.filter((v) => v.memberId !== currentId).map((v) => store.setVote({ roomId, memberId: v.memberId, ideaId: v.ideaId, value: null })),
+      ...snap.availability.filter((a) => a.memberId !== currentId).map((a) => store.toggleAvailability({ roomId, memberId: a.memberId, day: a.day, slot: a.slot })),
+    ]);
+    const jobs: Promise<unknown>[] = [];
     others.forEach((m, idx) => {
-      // Önce eski cevaplarını temizle
-      snap.ratings.filter((r) => r.memberId === m.id && r.score !== null).forEach((r) =>
-        cleanup.push(() => store.setRating({ roomId, memberId: m.id, ideaId: r.ideaId, score: null })));
-      snap.availability.filter((a) => a.memberId === m.id).forEach((a) =>
-        cleanup.push(() => store.toggleAvailability({ roomId, memberId: m.id, day: a.day, slot: a.slot as Slot })));
-      cleanup.push(() => store.setAttendance({ roomId, memberId: m.id, status: null }));
-      // Bazıları bilerek boş kalsın (her 3 kişiden biri) → "eksik sonuç" görülsün
-      if (idx % 3 === 2) return;
+      if (idx % 3 === 2) return; // her 3 kişiden biri bilerek boş kalır → "eksik sonuç"
       snap.ideas.forEach((idea) => {
-        if (Math.random() < 0.15) return;
-        const score = pick([2, 3, 3, 4, 4, 5, 5, Math.random() < 0.2 ? 1 : 4]) as Score;
-        jobs.push(() => store.setRating({ roomId, memberId: m.id, ideaId: idea.id, score }));
+        const r = Math.random();
+        if (r < 0.2) return;
+        jobs.push(store.setVote({ roomId, memberId: m.id, ideaId: idea.id, value: r < 0.7 ? 'yes' : 'no' }));
       });
-      days.forEach((day) =>
-        SLOTS.forEach((slot) => {
-          if (Math.random() < 0.3) jobs.push(() => store.toggleAvailability({ roomId, memberId: m.id, day, slot }));
-        }),
-      );
-      const r = Math.random();
-      if (r < 0.6) jobs.push(() => store.setAttendance({ roomId, memberId: m.id, status: 'yes' }));
-      else if (r < 0.8) jobs.push(() => store.setAttendance({ roomId, memberId: m.id, status: 'no' }));
+      days.forEach((day) => SLOTS.forEach((slot) => Math.random() < 0.35 && jobs.push(store.toggleAvailability({ roomId, memberId: m.id, day, slot }))));
     });
-    // Önce temizlik biter, sonra yeni cevaplar yazılır (karışmasınlar diye)
-    await Promise.allSettled(cleanup.map((f) => f()));
-    await Promise.allSettled(jobs.map((f) => f()));
-    setBusy(false);
+    await Promise.allSettled(jobs);
     say('Rastgele cevaplar yazıldı.');
   }
 
   async function demo(kind: DemoKind) {
-    setBusy(true);
+    say('Demo oda kuruluyor…');
     try {
       const { roomId: id, meId } = await seedDemo(store, kind, todayString());
       device.bindMember(id, meId);
-      device.updateRoomState(id, { guideDone: true, hints: { rating: true, gridHold: true } });
-      device.setLastRoom({ id, name: 'Cumartesi ekibi' });
+      device.setLastRoom({ id, name: DEMO_ROOM_NAME });
       setOpen(false);
       navigate(`/r/${id}/sonuc`);
     } catch (e) {
       console.error(e);
       say('Demo oda kurulamadı.');
-    } finally {
-      setBusy(false);
     }
-  }
-
-  function resetGuide() {
-    if (!roomId) return;
-    device.resetGuide(roomId);
-    window.location.assign(`/r/${roomId}`);
   }
 
   async function resetAll() {
     setConfirmReset(false);
     await store.resetAll();
     device.clearAll();
-    setOpen(false);
     window.location.assign('/');
   }
 
@@ -134,36 +102,22 @@ export default function TestPanel() {
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} label="Test paneli">
         <h2 className="h2">Test paneli · {isOnline ? 'çevrimiçi (Supabase)' : 'çevrimdışı (localStorage)'}</h2>
-        {busy && <p className="sec s13">Çalışıyor…</p>}
         {roomId && snap ? (
           <div className="tp-group">
             <p className="sec s13">Bu sekmede kim olayım?</p>
-            <div className="tp-people">
+            <div className="tp-row">
               {snap.members.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className="btn2 sm"
-                  aria-pressed={m.id === currentId}
-                  onClick={() => becomeMember(m)}
-                >
+                <button key={m.id} type="button" className="btn2 sm" aria-pressed={m.id === currentId} onClick={() => become(m)}>
                   {m.name}
                 </button>
               ))}
-              <button type="button" className="btn2 sm" aria-pressed={currentId === null} onClick={() => becomeMember(null)}>
+              <button type="button" className="btn2 sm" aria-pressed={currentId === null} onClick={() => become(null)}>
                 Kimse (Katıl ekranı)
               </button>
             </div>
             <div className="tp-row">
-              <button type="button" className="btn2 sm" onClick={() => void addFake()}>
-                Sahte üye ekle
-              </button>
-              <button type="button" className="btn2 sm" onClick={() => void randomAnswers()}>
-                Diğerlerine rastgele cevap
-              </button>
-              <button type="button" className="btn2 sm" onClick={resetGuide}>
-                Rehber ve ipuçlarını sıfırla
-              </button>
+              <button type="button" className="btn2 sm" onClick={() => void addFake()}>Sahte üye ekle</button>
+              <button type="button" className="btn2 sm" onClick={() => void randomAnswers()}>Diğerlerine rastgele cevap</button>
             </div>
           </div>
         ) : (
@@ -171,12 +125,8 @@ export default function TestPanel() {
         )}
         <div className="tp-group">
           <div className="tp-row">
-            <button type="button" className="btn2 sm" onClick={() => void demo('eksik')}>
-              Demo oda (eksik)
-            </button>
-            <button type="button" className="btn2 sm" onClick={() => void demo('kesin')}>
-              Demo oda (kesin)
-            </button>
+            <button type="button" className="btn2 sm" onClick={() => void demo('eksik')}>Demo oda (eksik)</button>
+            <button type="button" className="btn2 sm" onClick={() => void demo('kesin')}>Demo oda (kesin)</button>
           </div>
           <div className="tp-row">
             {localStore && (
@@ -197,21 +147,13 @@ export default function TestPanel() {
             </button>
           </div>
         </div>
-        {msg && (
-          <p className="s13 b" role="status">
-            {msg}
-          </p>
-        )}
+        {msg && <p className="s13 b" role="status">{msg}</p>}
         {kb !== null && <p className="sec s13 mono">localStorage: ~{kb} KB / ~5000 KB</p>}
       </Sheet>
       <ConfirmDialog
         open={confirmReset}
         title={isOnline ? 'Bu cihazın kayıtları silinsin mi?' : 'Bütün veriler silinsin mi?'}
-        body={
-          isOnline
-            ? 'Bu tarayıcı hangi odalarda kim olduğunu unutur. Sunucudaki odalar silinmez.'
-            : 'Odalar, üyeler ve bu tarayıcıdaki bütün kayıtlar silinir.'
-        }
+        body={isOnline ? 'Bu tarayıcı hangi odalarda kim olduğunu unutur. Sunucudaki odalar silinmez.' : 'Odalar ve bu tarayıcıdaki bütün kayıtlar silinir.'}
         confirmLabel="Sil"
         cancelLabel="Vazgeç"
         onConfirm={() => void resetAll()}

@@ -1,10 +1,7 @@
-.sug-section {
-  padding-top: var(--sp-4);
-}
 .sug-title {
   margin-bottom: var(--sp-2);
 }
-.sug-strip {
+ul.sug-strip {
   display: flex;
   gap: var(--sp-2);
   padding: 0 var(--gutter) var(--sp-1);
@@ -12,11 +9,14 @@
   scroll-snap-type: x proximity;
   scrollbar-width: none;
 }
+.sheet ul.sug-strip {
+  margin: 0 calc(-1 * var(--gutter));
+}
 .sug-strip::-webkit-scrollbar {
   display: none;
 }
 .sug {
-  flex: 0 0 132px;
+  flex: 0 0 138px;
   border: 1px solid var(--c-line);
   border-radius: var(--radius);
   background: var(--c-surface);

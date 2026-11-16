@@ -4,9 +4,8 @@
 // - Canlı güncelleme: Supabase Realtime "broadcast" kanalı (room:{id}). Mesaj sadece "tekrar oku" der,
 //   tıpkı çevrimdışı sürümdeki BroadcastChannel gibi.
 import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js';
-import { findSuggestion } from './suggestions';
-import { ItemTakenError, SaveError, type DataStore } from './store';
-import type { Idea, Item, Member, Room, RoomSnapshot } from './types';
+import { SaveError, type DataStore } from './store';
+import type { Idea, Member, Room, RoomSnapshot } from './types';
 
 /** Ağ hatası: ekran "Bağlantı yok. Tekrar dene." gösterir. */
 export class OfflineError extends Error {
@@ -31,7 +30,6 @@ export function createSupabaseStore(url: string, key: string): DataStore {
     }
     if (res.error) {
       const msg = res.error.message ?? '';
-      if (msg.includes('item-taken')) throw new ItemTakenError();
       if (!res.error.code && /fetch|network/i.test(msg)) throw new OfflineError(res.error);
       console.error(`[bulusalim] ${fn} hata verdi:`, res.error);
       throw new SaveError(msg);
@@ -66,14 +64,6 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       });
     },
 
-    async createRoomFrom(oldRoomId, { name, creatorId }) {
-      return rpc<{ room: Room; me: Member }>('bs_create_room_from', {
-        p_old_room: oldRoomId,
-        p_name: name,
-        p_creator_id: creatorId,
-      });
-    },
-
     async getRoom(roomId) {
       // Geçersiz biçimli id'yi sunucuya hiç gönderme
       if (!/^[0-9a-f-]{36}$/i.test(roomId)) return null;
@@ -91,7 +81,6 @@ export function createSupabaseStore(url: string, key: string): DataStore {
         p_room: roomId,
         p_name: input.name,
         p_place: input.place ?? '',
-        p_map_url: input.mapUrl ?? '',
         p_note: input.note ?? '',
         p_suggestion_id: input.suggestionId ?? null,
         p_added_by: input.addedBy,
@@ -105,7 +94,6 @@ export function createSupabaseStore(url: string, key: string): DataStore {
         p_idea: ideaId,
         p_name: patch.name ?? null,
         p_place: patch.place ?? null,
-        p_map_url: patch.mapUrl ?? null,
         p_note: patch.note ?? null,
       });
       changed(idea.roomId);
@@ -117,8 +105,8 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       changed(roomId);
     },
 
-    async setRating({ roomId, memberId, ideaId, score }) {
-      await rpc('bs_set_rating', { p_room: roomId, p_member: memberId, p_idea: ideaId, p_score: score });
+    async setVote({ roomId, memberId, ideaId, value }) {
+      await rpc('bs_set_vote', { p_room: roomId, p_member: memberId, p_idea: ideaId, p_value: value });
       changed(roomId);
     },
 
@@ -126,29 +114,6 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       const on = await rpc<boolean>('bs_toggle_availability', { p_room: roomId, p_member: memberId, p_day: day, p_slot: slot });
       changed(roomId);
       return on;
-    },
-
-    async setAttendance({ roomId, memberId, status }) {
-      await rpc('bs_set_attendance', { p_room: roomId, p_member: memberId, p_status: status });
-      changed(roomId);
-    },
-
-    async seedItemsIfNeeded(roomId, suggestionId) {
-      // Şablon istemcide (suggestions.ts); "tek kez" garantisi sunucuda (oda satırı kilitlenir)
-      const names = findSuggestion(suggestionId)?.bring ?? [];
-      await rpc('bs_seed_items', { p_room: roomId, p_names: names });
-      changed(roomId);
-    },
-
-    async addItem(roomId, { name, createdBy }) {
-      const item = await rpc<Item>('bs_add_item', { p_room: roomId, p_name: name, p_created_by: createdBy });
-      changed(roomId);
-      return item;
-    },
-
-    async claimItem(itemId, memberId) {
-      const roomId = await rpc<string>('bs_claim_item', { p_item: itemId, p_member: memberId });
-      changed(roomId);
     },
 
     subscribe(roomId, onChange) {

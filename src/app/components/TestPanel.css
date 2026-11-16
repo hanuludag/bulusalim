@@ -1,7 +1,7 @@
 .tp-fab {
   position: fixed;
-  top: 12px;
-  right: 56px;
+  left: 8px;
+  bottom: calc(120px + var(--safe-bottom));
   z-index: 40;
   min-width: var(--touch);
   height: 32px;

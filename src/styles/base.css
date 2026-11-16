@@ -171,6 +171,9 @@ a {
   color: var(--c-ink-2);
   margin-top: 6px;
 }
+.join-q {
+  margin-top: var(--sp-4);
+}
 .err {
   font-size: var(--fs-sm);
   color: var(--c-ink);
@@ -232,10 +235,6 @@ a {
   align-items: center;
   gap: 10px;
   z-index: 5;
-}
-.dock.above-tabs {
-  padding-bottom: var(--sp-3);
-  bottom: calc(60px + var(--safe-bottom));
 }
 
 .center-msg {

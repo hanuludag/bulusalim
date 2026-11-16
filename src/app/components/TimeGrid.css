@@ -1,11 +1,6 @@
-.tgrid {
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
 .tg {
   display: grid;
-  grid-template-columns: 96px repeat(3, minmax(0, 1fr));
+  grid-template-columns: 104px repeat(2, minmax(0, 1fr));
   gap: 6px;
   align-items: center;
 }
@@ -24,20 +19,17 @@
   gap: 6px;
 }
 .c {
-  height: 48px;
+  height: 50px;
   border: 1px solid var(--c-line);
   border-radius: var(--radius);
   background: var(--c-surface);
-  font: 500 var(--fs-md) var(--f-mono);
+  font: 500 var(--fs-lg) var(--f-mono);
   color: var(--c-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 0;
   touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+}
+.c.z {
+  color: var(--c-ink-2);
 }
 .c.me {
   background: var(--c-accent);
@@ -49,7 +41,4 @@
 }
 .c.me.all {
   border-color: var(--c-ink);
-}
-.c.z {
-  color: var(--c-ink-2);
 }

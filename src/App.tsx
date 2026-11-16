@@ -7,7 +7,9 @@ import { copy } from './app/copy';
 import Home from './app/pages/Home';
 import RoomReady from './app/pages/RoomReady';
 import RoomGate from './app/pages/RoomGate';
-import Room from './app/pages/Room';
+import IdeasScreen from './app/pages/IdeasScreen';
+import TimeScreen from './app/pages/TimeScreen';
+import ResultScreen from './app/pages/ResultScreen';
 
 // Test paneli sadece geliştirme modunda yüklenir (build'e girmez)
 const TestPanel = import.meta.env.DEV ? lazy(() => import('./app/components/TestPanel')) : null;
@@ -20,7 +22,9 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/r/:roomId" element={<RoomGate />} />
           <Route path="/r/:roomId/hazir" element={<RoomReady />} />
-          <Route path="/r/:roomId/:tab" element={<Room />} />
+          <Route path="/r/:roomId/fikirler" element={<IdeasScreen />} />
+          <Route path="/r/:roomId/zaman" element={<TimeScreen />} />
+          <Route path="/r/:roomId/sonuc" element={<ResultScreen />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         {TestPanel && (

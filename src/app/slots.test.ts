@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { slotHours, slotLabel, slotLower } from './slots';
+import { SLOTS, slotHours, slotLabel, slotLower } from './slots';
 
-describe('dilimler', () => {
+describe('dilimler v2', () => {
   it('etiketler', () => {
-    expect(slotLabel('ogle')).toBe('Öğle');
-    expect(slotLower('ogle')).toBe('öğle');
+    expect(SLOTS).toEqual(['gunduz', 'aksam']);
+    expect(slotLabel('gunduz')).toBe('Gündüz');
+    expect(slotLower('gunduz')).toBe('gündüz');
     expect(slotLower('aksam')).toBe('akşam');
-    expect(slotHours('sabah')).toBe('10–13');
+    expect(slotHours('gunduz')).toBe('10–17');
     expect(slotHours('aksam')).toBe('17–21');
   });
 });

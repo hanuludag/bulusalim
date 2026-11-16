@@ -1,35 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { landingTab } from './landing';
-import { addIdea, free, makeSnap, rate } from './testHelpers';
+import { landingScreen } from './landing';
+import { addIdea, free, makeSnap, vote } from './testHelpers';
 
-describe('landingTab', () => {
-  it('hiç girdi yok → fikirler', () => {
-    expect(landingTab(makeSnap(['A']), 'm0')).toBe('fikirler');
+describe('landingScreen', () => {
+  it('cevap yok → fikirler', () => expect(landingScreen(makeSnap(['A']), 'm0')).toBe('fikirler'));
+  it('sadece saat var → fikirler', () => {
+    const s = makeSnap(['A']);
+    free(s, 'm0', '2026-11-14', 'gunduz');
+    expect(landingScreen(s, 'm0')).toBe('fikirler');
   });
-  it('puan var, saat yok → zaman', () => {
+  it('cevap var saat yok → zaman (no da sayılır)', () => {
     const s = makeSnap(['A']);
     addIdea(s, 'a', 1);
-    rate(s, 'm0', 'a', 4);
-    expect(landingTab(s, 'm0')).toBe('zaman');
+    vote(s, 'm0', 'a', 'no');
+    expect(landingScreen(s, 'm0')).toBe('zaman');
   });
   it('ikisi de var → sonuç', () => {
     const s = makeSnap(['A']);
     addIdea(s, 'a', 1);
-    rate(s, 'm0', 'a', 4);
-    free(s, 'm0', '2026-11-14', 'ogle');
-    expect(landingTab(s, 'm0')).toBe('sonuc');
+    vote(s, 'm0', 'a', 'yes');
+    free(s, 'm0', '2026-11-14', 'aksam');
+    expect(landingScreen(s, 'm0')).toBe('sonuc');
   });
-  it('kaldırılmış puan (null) sayılmaz', () => {
-    const s = makeSnap(['A']);
-    addIdea(s, 'a', 1);
-    rate(s, 'm0', 'a', null);
-    expect(landingTab(s, 'm0')).toBe('fikirler');
-  });
-  it('başkasının girdisi beni etkilemez', () => {
+  it('başkasının cevabı beni etkilemez', () => {
     const s = makeSnap(['A', 'B']);
     addIdea(s, 'a', 1);
-    rate(s, 'm1', 'a', 4);
-    free(s, 'm1', '2026-11-14', 'ogle');
-    expect(landingTab(s, 'm0')).toBe('fikirler');
+    vote(s, 'm1', 'a', 'yes');
+    expect(landingScreen(s, 'm0')).toBe('fikirler');
   });
 });

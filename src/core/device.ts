@@ -1,51 +1,36 @@
-// "Bu cihaz kim?" (§12). Konudan bağımsız: anahtar öneki dışarıdan verilir (createDevice('bs')).
-// localStorage: tarayıcıda kalıcı, aynı tarayıcıdaki bütün sekmeler paylaşır.
-// sessionStorage: sadece bu sekmeye özel, sekme kapanınca silinir.
-// Test panelinde "bu sekmede kim olayım" seçimi sessionStorage'a yazılır, böylece
-// aynı bilgisayarda her sekme farklı bir arkadaşı taklit edebilir.
+// "Bu cihaz kim?" Konudan bağımsız: anahtar öneki dışarıdan verilir (createDevice('bs')).
+// localStorage: bu tarayıcıda kalıcı, bütün sekmeler paylaşır.
+// sessionStorage: sadece bu sekmeye özel (test panelinde "bu sekmede kim olayım").
 // Okuma/yazma hata verirse (gizli sekme vb.) uygulama çökmez, sadece hatırlamaz.
 
-export interface RoomDeviceState {
-  memberId: string;
-  guideDone: boolean;
-  hints: { rating: boolean; gridHold: boolean };
-  finalSeen: boolean;
-}
+export interface LastRoom { id: string; name: string }
 
-export interface LastRoom {
-  id: string;
-  name: string;
-}
+const NOBODY = '-';
+const local = () => window.localStorage;
+const session = () => window.sessionStorage;
 
-function safeGet(storage: () => Storage, key: string): string | null {
+function get(st: () => Storage, key: string): string | null {
   try {
-    return storage().getItem(key);
+    return st().getItem(key);
   } catch {
     return null;
   }
 }
-
-function safeSet(storage: () => Storage, key: string, value: string): void {
+function set(st: () => Storage, key: string, value: string) {
   try {
-    storage().setItem(key, value);
+    st().setItem(key, value);
   } catch {
     /* hatırlayamıyoruz, sorun değil */
   }
 }
-
-function safeRemove(storage: () => Storage, key: string): void {
+function del(st: () => Storage, key: string) {
   try {
-    storage().removeItem(key);
+    st().removeItem(key);
   } catch {
     /* yok say */
   }
 }
-
-const local = () => window.localStorage;
-const NOBODY = '-';
-const session = () => window.sessionStorage;
-
-function readJson<T>(raw: string | null): T | null {
+function json<T>(raw: string | null): T | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw) as T;
@@ -60,104 +45,50 @@ export function createDevice(prefix: string) {
   const lastNameKey = `${prefix}:lastName`;
   const lastRoomKey = `${prefix}:lastRoom`;
 
-  const fresh = (memberId: string): RoomDeviceState => ({
-    memberId,
-    guideDone: false,
-    hints: { rating: false, gridHold: false },
-    finalSeen: false,
-  });
-
-  /** Odadaki kayıt (önce bu sekmenin test kimliği, yoksa cihazın kimliği). */
-  function getRoomState(roomId: string): RoomDeviceState | null {
-    const saved = readJson<RoomDeviceState>(safeGet(local, roomKey(roomId)));
-    const asMember = safeGet(session, asKey(roomId));
-    if (asMember === NOBODY) return null; // test: bu sekmede kimse değilim
-    if (asMember) {
-      // Test kimliği: ipucu/rehber durumu da sekmeye özel tutulur
-      const tabState = readJson<RoomDeviceState>(safeGet(session, roomKey(roomId)));
-      if (tabState && tabState.memberId === asMember) return tabState;
-      return fresh(asMember);
-    }
-    if (!saved || typeof saved.memberId !== 'string') return null;
-    return { ...fresh(saved.memberId), ...saved, hints: { ...fresh('').hints, ...saved.hints } };
-  }
-
-  function writeRoomState(roomId: string, state: RoomDeviceState): void {
-    if (safeGet(session, asKey(roomId))) {
-      safeSet(session, roomKey(roomId), JSON.stringify(state));
-    } else {
-      safeSet(local, roomKey(roomId), JSON.stringify(state));
-    }
-  }
-
   return {
-    getRoomState,
-
+    /** Bu cihazın (ya da test sekmesinin) bu odadaki üye kimliği. */
     getMemberId(roomId: string): string | null {
-      return getRoomState(roomId)?.memberId ?? null;
+      const as = get(session, asKey(roomId));
+      if (as === NOBODY) return null;
+      if (as) return as;
+      // Eski biçimde ({memberId, guideDone, …}) kayıt olabilir: sadece memberId alınır
+      const saved = json<{ memberId?: unknown }>(get(local, roomKey(roomId)));
+      return typeof saved?.memberId === 'string' ? saved.memberId : null;
     },
 
-    /** Bu cihazı odadaki bir üyeye bağlar. */
-    bindMember(roomId: string, memberId: string): void {
-      // Bu sekme test kimliği kullanıyorsa bağlama da sadece bu sekmede kalır
-      if (safeGet(session, asKey(roomId)) !== null) {
-        safeSet(session, asKey(roomId), memberId);
-        safeSet(session, roomKey(roomId), JSON.stringify(fresh(memberId)));
-        return;
-      }
-      safeSet(local, roomKey(roomId), JSON.stringify(fresh(memberId)));
+    /** Bu cihazı odadaki bir üyeye bağlar. Test sekmesindeyse bağlama sadece o sekmede kalır. */
+    bindMember(roomId: string, memberId: string) {
+      if (get(session, asKey(roomId)) !== null) set(session, asKey(roomId), memberId);
+      else set(local, roomKey(roomId), JSON.stringify({ memberId }));
     },
 
-    updateRoomState(roomId: string, patch: Partial<Omit<RoomDeviceState, 'hints'>> & { hints?: Partial<RoomDeviceState['hints']> }): void {
-      const cur = getRoomState(roomId);
-      if (!cur) return;
-      writeRoomState(roomId, { ...cur, ...patch, hints: { ...cur.hints, ...patch.hints } });
+    /** Test paneli: bu sekmede başka biri ol (null = test kimliğini bırak). */
+    actAs(roomId: string, memberId: string | null) {
+      if (memberId) set(session, asKey(roomId), memberId);
+      else del(session, asKey(roomId));
     },
-
     /** Test paneli: bu sekmede kimse olma (Katıl ekranını görmek için). */
-    actAsNobody(roomId: string): void {
-      safeRemove(session, roomKey(roomId));
-      safeSet(session, asKey(roomId), NOBODY);
+    actAsNobody(roomId: string) {
+      set(session, asKey(roomId), NOBODY);
     },
 
-    /** Test paneli: bu sekmede başka biri ol. null = test kimliğini bırak. */
-    actAs(roomId: string, memberId: string | null): void {
-      safeRemove(session, roomKey(roomId));
-      if (memberId) safeSet(session, asKey(roomId), memberId);
-      else safeRemove(session, asKey(roomId));
-    },
-
-    /** Test paneli: bu sekmenin rehber ve ipucu durumunu sıfırla. */
-    resetGuide(roomId: string): void {
-      const cur = getRoomState(roomId);
-      if (!cur) return;
-      writeRoomState(roomId, { ...fresh(cur.memberId) });
-    },
-
-    getLastName(): string {
-      return safeGet(local, lastNameKey) ?? '';
-    },
-    setLastName(name: string): void {
-      safeSet(local, lastNameKey, name);
-    },
-
+    getLastName: () => get(local, lastNameKey) ?? '',
+    setLastName: (name: string) => set(local, lastNameKey, name),
     getLastRoom(): LastRoom | null {
-      const r = readJson<LastRoom>(safeGet(local, lastRoomKey));
+      const r = json<LastRoom>(get(local, lastRoomKey));
       return r && typeof r.id === 'string' && typeof r.name === 'string' ? r : null;
     },
-    setLastRoom(room: LastRoom): void {
-      safeSet(local, lastRoomKey, JSON.stringify(room));
-    },
+    setLastRoom: (room: LastRoom) => set(local, lastRoomKey, JSON.stringify(room)),
 
     /** Bu önekle başlayan bütün anahtarları siler (local + session). */
-    clearAll(): void {
+    clearAll() {
       for (const st of [local, session]) {
         try {
           const s = st();
           const keys: string[] = [];
           for (let i = 0; i < s.length; i++) {
             const k = s.key(i);
-            if (k && k.startsWith(`${prefix}:`)) keys.push(k);
+            if (k?.startsWith(`${prefix}:`)) keys.push(k);
           }
           keys.forEach((k) => s.removeItem(k));
         } catch {

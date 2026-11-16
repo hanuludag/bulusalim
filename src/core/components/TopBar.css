@@ -1,0 +1,22 @@
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 0 8px 0 var(--gutter);
+  border-bottom: 1px solid var(--c-line);
+  flex: 0 0 auto;
+}
+.topbar-back {
+  margin-left: -12px;
+}
+.topbar-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-link {
+  padding: 0 var(--sp-2);
+}

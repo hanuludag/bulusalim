@@ -1,14 +1,13 @@
-// Katıl (§6, §18): isimle katıl, aynı isim varsa "Sen misin?".
+// Katıl: kim çağırdı + oda adı + ad + Katıl. Aynı isim varsa "Sen misin?".
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { copy } from '../copy';
 import { device, store } from '../runtime';
-import { landingTab } from '../landing';
+import { landingScreen } from '../landing';
 import type { Member, RoomSnapshot } from '../types';
 import { cleanName, findByName, NAME_MAX } from '../../core/names';
 import { useToast } from '../../core/useToast';
-import { Avatar } from '../../core/components/Avatar';
-import './Join.css';
+import './Home.css';
 
 export default function Join({ snap }: { snap: RoomSnapshot }) {
   const navigate = useNavigate();
@@ -18,20 +17,14 @@ export default function Join({ snap }: { snap: RoomSnapshot }) {
   const [match, setMatch] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-
   const { room, members } = snap;
   const creator = members.find((m) => m.id === room.createdBy) ?? members[0];
-  const shown = members.slice(0, 2).map((m) => m.name);
-  const extra = members.length - shown.length;
 
-  function enter(member: Member, isNew: boolean) {
-    device.bindMember(room.id, member.id);
-    device.setLastName(member.name);
+  function enter(m: Member, isNew: boolean) {
+    device.bindMember(room.id, m.id);
+    device.setLastName(m.name);
     device.setLastRoom({ id: room.id, name: room.name });
-    navigate(`/r/${room.id}/${isNew ? 'fikirler' : landingTab(snap, member.id)}`, {
-      replace: true,
-      state: isNew ? undefined : { welcome: true },
-    });
+    navigate(`/r/${room.id}/${isNew ? 'fikirler' : landingScreen(snap, m.id)}`, { replace: true });
   }
 
   async function submit(e: FormEvent) {
@@ -39,29 +32,19 @@ export default function Join({ snap }: { snap: RoomSnapshot }) {
     const clean = cleanName(name);
     if (!clean) {
       setError(copy.common.errName);
-      input.current?.focus();
-      return;
+      return input.current?.focus();
     }
     setError(null);
     const existing = findByName(members, clean);
-    if (existing) {
-      setMatch(existing);
-      return;
-    }
+    if (existing) return setMatch(existing);
     setBusy(true);
     try {
-      const m = await store.joinRoom(room.id, clean);
-      enter(m, true);
-    } catch {
-      toast.show(copy.common.saveFailed);
+      enter(await store.joinRoom(room.id, clean), true);
+    } catch (err) {
+      console.error('[bulusalim] Katılınamadı', err);
+      toast.show(copy.common.saveFailed, 2500);
       setBusy(false);
     }
-  }
-
-  function otherName() {
-    setMatch(null);
-    setName('');
-    requestAnimationFrame(() => input.current?.focus());
   }
 
   return (
@@ -71,27 +54,10 @@ export default function Join({ snap }: { snap: RoomSnapshot }) {
           {copy.common.logo}
         </Link>
       </header>
-      <div className="pad join-head">
+      <div className="pad home-head">
         {creator && <p className="sec">{copy.join.invitedBy(creator.name)}</p>}
         <h1 className="h1">{room.name}</h1>
-        <p className="sec">{copy.join.sub}</p>
       </div>
-      {members.length > 0 && (
-        <div className="pad join-members-wrap">
-          <div className="join-members">
-            <div className="join-avatars">
-              {members.slice(0, 4).map((m) => (
-                <Avatar key={m.id} name={m.name} />
-              ))}
-            </div>
-            <span className="s13">
-              {copy.join.inRoom}
-              {shown.join(', ')}
-              {extra > 0 && <span className="mono"> {copy.join.more(extra)}</span>}
-            </span>
-          </div>
-        </div>
-      )}
       <form id="join" className="pad join-form" onSubmit={submit} noValidate>
         <div className="fld">
           <label htmlFor="join-name">{copy.join.nameLabel}</label>
@@ -113,12 +79,12 @@ export default function Join({ snap }: { snap: RoomSnapshot }) {
               {error}
             </p>
           )}
+          {match && (
+            <p className="m join-q" role="alert">
+              {copy.join.sameName(match.name)}
+            </p>
+          )}
         </div>
-        {match && (
-          <p className="m join-q" role="alert">
-            {copy.join.sameName(match.name)}
-          </p>
-        )}
       </form>
       <div className="grow" />
       <div className="dock">
@@ -127,7 +93,15 @@ export default function Join({ snap }: { snap: RoomSnapshot }) {
             <button className="btn" type="button" onClick={() => enter(match, false)}>
               {copy.join.itsMe}
             </button>
-            <button className="btn2" type="button" onClick={otherName}>
+            <button
+              className="btn2"
+              type="button"
+              onClick={() => {
+                setMatch(null);
+                setName('');
+                requestAnimationFrame(() => input.current?.focus());
+              }}
+            >
               {copy.join.otherName}
             </button>
           </>

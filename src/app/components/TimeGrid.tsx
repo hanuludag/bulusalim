@@ -1,23 +1,15 @@
-// Zaman ızgarası: 7 gün × 3 dilim.
+// Zaman ızgarası: 7 gün × 2 dilim. Kutuda sadece boş kişi sayısı. Tek dokunuş seç/kaldır.
 import { copy } from '../copy';
 import { SLOTS, slotHours, slotLabel, slotLower } from '../slots';
+import type { Result } from '../result';
 import type { RoomSnapshot, Slot } from '../types';
-import { formatDate, formatRatio, weekDays } from '../../core/format';
-import { TimeCell } from './TimeCell';
+import { formatDate, weekDays } from '../../core/format';
 import './TimeGrid.css';
 
-export interface TimeGridProps {
-  snap: RoomSnapshot;
-  meId: string;
-  onToggle: (day: string, slot: Slot) => void;
-  onHold: (day: string, slot: Slot) => void;
-}
+export interface TimeGridProps { result: Result; snap: RoomSnapshot; meId: string; onToggle: (day: string, slot: Slot) => void }
 
-export function TimeGrid({ snap, meId, onToggle, onHold }: TimeGridProps) {
-  const total = snap.members.length;
+export function TimeGrid({ result, snap, meId, onToggle }: TimeGridProps) {
   const days = weekDays(snap.room.startDate);
-  const memberIds = new Set(snap.members.map((m) => m.id));
-
   return (
     <div className="tgrid">
       <div className="tg tg-head" aria-hidden="true">
@@ -34,20 +26,21 @@ export function TimeGrid({ snap, meId, onToggle, onHold }: TimeGridProps) {
           <div className="tg" key={day} role="group" aria-label={formatDate(day)}>
             <span className="mono s13">{formatDate(day)}</span>
             {SLOTS.map((slot) => {
-              const free = snap.availability.filter((a) => a.day === day && a.slot === slot && memberIds.has(a.memberId));
-              const mine = free.some((a) => a.memberId === meId);
-              const ratio = formatRatio(free.length, total);
+              const cell = result.slots.find((s) => s.day === day && s.slot === slot);
+              const n = cell?.freeCount ?? 0;
+              const mine = cell?.freeIds.includes(meId) ?? false;
+              const all = result.allFreeSlots.some((s) => s.day === day && s.slot === slot);
               return (
-                <TimeCell
+                <button
                   key={slot}
-                  text={ratio}
-                  label={copy.time.cellLabel(formatDate(day), slotLower(slot), ratio, mine)}
-                  mine={mine}
-                  all={total > 0 && free.length === total}
-                  zero={free.length === 0}
-                  onToggle={() => onToggle(day, slot)}
-                  onHold={() => onHold(day, slot)}
-                />
+                  type="button"
+                  className={['c', mine && 'me', all && 'all', n === 0 && 'z'].filter(Boolean).join(' ')}
+                  aria-pressed={mine}
+                  aria-label={copy.time.cellLabel(formatDate(day), slotLower(slot), n, mine)}
+                  onClick={() => onToggle(day, slot)}
+                >
+                  {n}
+                </button>
               );
             })}
           </div>

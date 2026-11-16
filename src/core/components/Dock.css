@@ -1,0 +1,32 @@
+.dock2 {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--page-max);
+  background: var(--c-ground);
+  border-top: 1px solid var(--c-line);
+  padding: var(--sp-3) var(--gutter) calc(16px + var(--safe-bottom));
+  z-index: 10;
+  animation: dock-in 200ms ease-out;
+}
+.dock2 .btn {
+  min-height: 56px;
+}
+.has-dock {
+  padding-bottom: 96px;
+}
+@keyframes dock-in {
+  from {
+    transform: translate(-50%, 100%);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock2 {
+    animation: none;
+  }
+}

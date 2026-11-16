@@ -1,9 +1,9 @@
-// Ana sayfa: oda kur (§6, §29).
+// Ana sayfa: oda adı (hazır "Buluşma") + ad → oda kur. Hafta başlangıcı = bugün.
 import { useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { copy } from '../copy';
 import { device, store } from '../runtime';
-import { formatDate, todayString } from '../../core/format';
+import { todayString } from '../../core/format';
 import { cleanName, NAME_MAX } from '../../core/names';
 import { useToast } from '../../core/useToast';
 import './Home.css';
@@ -11,8 +11,7 @@ import './Home.css';
 export default function Home() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [roomName, setRoomName] = useState('');
-  const [startDate, setStartDate] = useState(todayString());
+  const [roomName, setRoomName] = useState<string>(copy.home.roomDefault);
   const [name, setName] = useState(() => device.getLastName());
   const [errors, setErrors] = useState<{ room?: string; name?: string }>({});
   const [busy, setBusy] = useState(false);
@@ -30,29 +29,49 @@ export default function Home() {
     if (next.name) return nameInput.current?.focus();
     setBusy(true);
     try {
-      const { room, creator } = await store.createRoom({ name: roomName, startDate, creatorName: name });
+      const { room, creator } = await store.createRoom({ name: roomName, startDate: todayString(), creatorName: name });
       device.bindMember(room.id, creator.id);
       device.setLastName(creator.name);
       device.setLastRoom({ id: room.id, name: room.name });
       navigate(`/r/${room.id}/hazir`);
     } catch (err) {
       console.error('[bulusalim] Oda kurulamadı', err);
-      toast.show(copy.common.saveFailed);
+      toast.show(copy.common.saveFailed, 2500);
       setBusy(false);
     }
   }
 
+  const field = (id: string, label: string, value: string, set: (v: string) => void, ref: React.RefObject<HTMLInputElement>, err?: string, hint?: string, max = 40) => (
+    <div className="fld">
+      <label htmlFor={id}>{label}</label>
+      <input
+        ref={ref}
+        id={id}
+        className="inp"
+        placeholder={hint}
+        value={value}
+        maxLength={max}
+        autoComplete="off"
+        aria-invalid={!!err}
+        aria-describedby={err ? `${id}-err` : undefined}
+        onChange={(e) => set(e.target.value)}
+      />
+      {err && (
+        <p id={`${id}-err`} className="err">
+          {err}
+        </p>
+      )}
+    </div>
+  );
+
   return (
-    <main className="page home">
+    <main className="page">
       <header className="bar">
         <span className="logo">{copy.common.logo}</span>
       </header>
       {lastRoom && (
         <Link to={`/r/${lastRoom.id}`} className="pad last-room">
-          <span>
-            <span className="sec">{copy.home.lastRoomPrefix}</span>
-            <span className="b">{lastRoom.name}</span>
-          </span>
+          <span className="sec">{copy.home.lastRoom(lastRoom.name)}</span>
           <span aria-hidden="true">→</span>
         </Link>
       )}
@@ -61,73 +80,8 @@ export default function Home() {
         <p className="sec">{copy.home.sub}</p>
       </div>
       <form id="create" className="pad home-form" onSubmit={submit} noValidate>
-        <div className="fld">
-          <label htmlFor="room">{copy.home.roomLabel}</label>
-          <input
-            ref={roomInput}
-            id="room"
-            className="inp"
-            placeholder={copy.home.roomHint}
-            value={roomName}
-            maxLength={40}
-            autoComplete="off"
-            aria-invalid={!!errors.room}
-            aria-describedby={errors.room ? 'room-err' : undefined}
-            onChange={(e) => setRoomName(e.target.value)}
-          />
-          {errors.room && (
-            <p id="room-err" className="err">
-              {errors.room}
-            </p>
-          )}
-        </div>
-        <div className="fld">
-          <label htmlFor="week">{copy.home.weekLabel}</label>
-          {/* Görünen kısım biçimli metin; üstünde görünmez tarih alanı, dokununca seçici açılır */}
-          <div className="date-wrap">
-            <span className="inp mono date-face" aria-hidden="true">
-              {formatDate(startDate)}
-            </span>
-            <input
-              id="week"
-              type="date"
-              className="date-input"
-              value={startDate}
-              aria-describedby="week-note"
-              onChange={(e) => e.target.value && setStartDate(e.target.value)}
-              onClick={(e) => {
-                try {
-                  e.currentTarget.showPicker?.();
-                } catch {
-                  /* bazı tarayıcılar desteklemez */
-                }
-              }}
-            />
-          </div>
-          <p id="week-note" className="hint">
-            {copy.home.weekNote}
-          </p>
-        </div>
-        <div className="fld">
-          <label htmlFor="name">{copy.home.nameLabel}</label>
-          <input
-            ref={nameInput}
-            id="name"
-            className="inp"
-            placeholder={copy.home.nameHint}
-            value={name}
-            maxLength={NAME_MAX}
-            autoComplete="given-name"
-            aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? 'name-err' : undefined}
-            onChange={(e) => setName(e.target.value)}
-          />
-          {errors.name && (
-            <p id="name-err" className="err">
-              {errors.name}
-            </p>
-          )}
-        </div>
+        {field('room', copy.home.roomLabel, roomName, setRoomName, roomInput, errors.room)}
+        {field('name', copy.home.nameLabel, name, setName, nameInput, errors.name, copy.home.nameHint, NAME_MAX)}
       </form>
       <div className="grow" />
       <div className="dock">

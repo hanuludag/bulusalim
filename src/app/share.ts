@@ -1,40 +1,25 @@
-// Paylaşma metinleri (§21, §21a). Gönderme işi core/share.ts'te.
-import { formatDate, joinNames, withSuffix } from '../core/format';
+// Paylaşma metinleri. Gönderme işi core/share.ts'te.
+import { formatDate, joinNames } from '../core/format';
 import { copy } from './copy';
 import type { Result } from './result';
 import { slotHours, slotLower } from './slots';
 import type { RoomSnapshot } from './types';
 
-export function roomLink(roomId: string): string {
-  return `${window.location.origin}/r/${roomId}`;
-}
+export const roomLink = (roomId: string) => `${window.location.origin}/r/${roomId}`;
+export const firstShareText = (roomName: string, link: string) => copy.share.first(roomName, link);
 
-export function firstShareText(roomName: string, link: string): string {
-  return copy.share.first(roomName, link);
-}
+export const waitingNames = (snap: RoomSnapshot, r: Result) =>
+  joinNames(r.waiting.map((id) => snap.members.find((m) => m.id === id)?.name ?? ''));
 
-export function waitingNames(snap: RoomSnapshot, result: Result): string {
-  return joinNames(result.waiting.map((id) => snap.members.find((m) => m.id === id)?.name ?? ''));
-}
+export const remindText = (snap: RoomSnapshot, r: Result, link: string) =>
+  copy.share.remind(snap.room.name, r.voters.length, r.totalMembers, waitingNames(snap, r), link);
 
-export function remindText(snap: RoomSnapshot, result: Result, link: string): string {
-  return copy.share.remind(snap.room.name, result.totalMembers, withSuffix(result.voters.length), waitingNames(snap, result), link);
-}
-
-/** Kazanan ve zaman varsa sonuç metni; yoksa ilk paylaşım metnine düşer. */
-export function resultText(snap: RoomSnapshot, result: Result, link: string): string {
-  const w = result.winnerIdea;
-  const b = result.bestSlot;
-  if (!w || !b) return firstShareText(snap.room.name, link);
-  return copy.share.result(
-    snap.room.name,
-    w.name,
-    w.place,
-    formatDate(b.day),
-    slotLower(b.slot),
-    slotHours(b.slot),
-    result.attendance.yes,
-    result.totalMembers,
-    link,
-  );
+/** Sadece mevcut parçalar yazılır: kazanan fikir ve/veya en iyi zaman. */
+export function resultText(snap: RoomSnapshot, r: Result, link: string): string {
+  const parts: string[] = [];
+  const w = r.winnerIdea;
+  if (w) parts.push(w.place ? `${w.name} · ${w.place}` : w.name);
+  const b = r.bestSlot;
+  if (b) parts.push(`${formatDate(b.day)} ${slotLower(b.slot)} (${slotHours(b.slot)})`);
+  return copy.share.result(snap.room.name, parts, link);
 }

@@ -1,7 +1,7 @@
 // /r/:roomId → Bu cihaz üyeyse açılış sekmesine, değilse Katıl ekranına.
 import { Navigate, useParams } from 'react-router-dom';
 import { store, device } from '../runtime';
-import { landingTab } from '../landing';
+import { landingScreen } from '../landing';
 import { useRoom } from '../../core/useRoom';
 import { Loading, Offline, RoomNotFound } from '../components/Status';
 import Join from './Join';
@@ -18,5 +18,5 @@ export default function RoomGate() {
   const me = data.members.find((m) => m.id === memberId);
   if (!me) return <Join snap={data} />;
 
-  return <Navigate to={`/r/${data.room.id}/${landingTab(data, me.id)}`} replace state={{ welcome: true }} />;
+  return <Navigate to={`/r/${data.room.id}/${landingScreen(data, me.id)}`} replace />;
 }

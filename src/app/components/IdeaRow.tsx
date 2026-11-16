@@ -1,38 +1,37 @@
-// Fikir satırı: ad, yer, not, harita linki, ⋯ menüsü (sadece ekleyene), puan butonları, durum.
+// Fikir satırı: ad, yer, not, ⋯ menüsü (sadece ekleyene), Onaylıyorum / Onaylamıyorum.
 import { useEffect, useRef, useState } from 'react';
 import { copy } from '../copy';
-import type { Idea } from '../types';
-import { RatingButtons } from '../../core/components/RatingButtons';
+import type { Idea, VoteValue } from '../types';
 import { DotsIcon } from '../../core/components/Icons';
 import './IdeaRow.css';
 
 export interface IdeaRowProps {
   idea: Idea;
-  myScore: number | null;
-  ratedCount: number;
+  myVote: VoteValue | null;
+  yes: number;
+  no: number;
   mine: boolean;
-  showHint: boolean;
-  onRate: (score: number) => void;
+  onVote: (v: VoteValue) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function IdeaRow({ idea, myScore, ratedCount, mine, showHint, onRate, onEdit, onDelete }: IdeaRowProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
+export function IdeaRow({ idea, myVote, yes, no, mine, onVote, onEdit, onDelete }: IdeaRowProps) {
+  const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menu) return;
     const close = (e: Event) => {
       if (e instanceof KeyboardEvent) {
         if (e.key === 'Escape') {
-          setMenuOpen(false);
+          setMenu(false);
           btnRef.current?.focus();
         }
         return;
       }
-      if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node)) setMenuOpen(false);
+      if (!menuRef.current?.contains(e.target as Node) && !btnRef.current?.contains(e.target as Node)) setMenu(false);
     };
     document.addEventListener('pointerdown', close);
     document.addEventListener('keydown', close);
@@ -41,7 +40,12 @@ export function IdeaRow({ idea, myScore, ratedCount, mine, showHint, onRate, onE
       document.removeEventListener('pointerdown', close);
       document.removeEventListener('keydown', close);
     };
-  }, [menuOpen]);
+  }, [menu]);
+
+  const pick = (fn: () => void) => () => {
+    setMenu(false);
+    fn();
+  };
 
   return (
     <li className="idea">
@@ -51,59 +55,40 @@ export function IdeaRow({ idea, myScore, ratedCount, mine, showHint, onRate, onE
           {idea.place && <p className="sec">{idea.place}</p>}
           {idea.note && <p className="sec s13">{idea.note}</p>}
         </div>
-        {(idea.mapUrl || mine) && (
-          <div className="idea-actions">
-            {idea.mapUrl && (
-              <a href={idea.mapUrl} target="_blank" rel="noopener noreferrer" className="tb sm">
-                {copy.common.mapOpen}
-              </a>
-            )}
-            {mine && (
-              <button
-                ref={btnRef}
-                className={`ib${menuOpen ? ' ib-on' : ''}`}
-                type="button"
-                aria-label={copy.ideas.menu}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen((o) => !o)}
-              >
-                <DotsIcon />
-              </button>
-            )}
-          </div>
+        {mine && (
+          <button
+            ref={btnRef}
+            className={`ib${menu ? ' ib-on' : ''}`}
+            type="button"
+            aria-label={copy.ideas.menu}
+            aria-haspopup="menu"
+            aria-expanded={menu}
+            onClick={() => setMenu((o) => !o)}
+          >
+            <DotsIcon />
+          </button>
         )}
-        {menuOpen && (
+        {menu && (
           <div ref={menuRef} className="idea-menu" role="menu">
-            <button
-              role="menuitem"
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                onEdit();
-              }}
-            >
+            <button role="menuitem" type="button" onClick={pick(onEdit)}>
               {copy.ideas.edit}
             </button>
-            <button
-              role="menuitem"
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                onDelete();
-              }}
-            >
+            <button role="menuitem" type="button" onClick={pick(onDelete)}>
               {copy.ideas.delete}
             </button>
           </div>
         )}
       </div>
-      <RatingButtons value={myScore} onChange={onRate} labelFor={copy.ideas.rateLabel} groupLabel={idea.name} />
-      {showHint && <p className="sec s13 idea-hint">{copy.ideas.hintRating}</p>}
-      <p className="s13 idea-status">
-        {myScore === 1 && <span className="b">{copy.ideas.veto}</span>}
-        {ratedCount > 0 && <span className="sec">{copy.ideas.groupRated(ratedCount)}</span>}
-      </p>
+      <div className="votes" role="group" aria-label={idea.name}>
+        <button className={`vote${myVote === 'yes' ? ' yes' : ''}`} type="button" aria-pressed={myVote === 'yes'} onClick={() => onVote('yes')}>
+          {copy.ideas.yes}
+          {yes > 0 && <span className="mono"> {yes}</span>}
+        </button>
+        <button className={`vote${myVote === 'no' ? ' no' : ''}`} type="button" aria-pressed={myVote === 'no'} onClick={() => onVote('no')}>
+          {copy.ideas.no}
+          {no > 0 && <span className="mono"> {no}</span>}
+        </button>
+      </div>
     </li>
   );
 }

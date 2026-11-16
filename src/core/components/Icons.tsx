@@ -19,6 +19,12 @@ export const ShareIcon = ({ size = 22 }: { size?: number }) => (
   </svg>
 );
 
+export const BackIcon = () => (
+  <svg {...common}>
+    <path d="M15 5l-7 7 7 7" />
+  </svg>
+);
+
 export const ListIcon = () => (
   <svg {...common}>
     <path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1" />

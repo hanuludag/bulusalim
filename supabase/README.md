@@ -1,6 +1,6 @@
 # Supabase veritabanı
 
-Proje: `bulusalim` (Frankfurt, eu-central-1). Şema iki migration ile kuruldu:
+Proje: `bulusalim` (Frankfurt, eu-central-1). Şema `bulusalim_v2` migration'ı ile kuruldu (rooms, members, ideas, votes, availability):
 
 - `bulusalim_schema`: rooms, members, ideas, ratings, availability, attendance, items tabloları.
   RLS açık, politika yok ve anon/authenticated rollerinin tablo yetkileri geri alındı → tarayıcı tablolara doğrudan dokunamaz.
