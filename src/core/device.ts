@@ -4,6 +4,7 @@
 // Okuma/yazma hata verirse (gizli sekme vb.) uygulama çökmez, sadece hatırlamaz.
 
 export interface LastRoom { id: string; name: string }
+export interface SavedRoom { id: string; name: string; at: number }
 
 const NOBODY = '-';
 const local = () => window.localStorage;
@@ -44,6 +45,11 @@ export function createDevice(prefix: string) {
   const asKey = (roomId: string) => `${prefix}:as:${roomId}`;
   const lastNameKey = `${prefix}:lastName`;
   const lastRoomKey = `${prefix}:lastRoom`;
+  const roomsKey = `${prefix}:rooms`;
+  const readRooms = (): SavedRoom[] => {
+    const list = json<SavedRoom[]>(get(local, roomsKey));
+    return Array.isArray(list) ? list.filter((r) => r && typeof r.id === 'string' && typeof r.name === 'string') : [];
+  };
 
   return {
     /** Bu cihazın (ya da test sekmesinin) bu odadaki üye kimliği. */
@@ -78,7 +84,26 @@ export function createDevice(prefix: string) {
       const r = json<LastRoom>(get(local, lastRoomKey));
       return r && typeof r.id === 'string' && typeof r.name === 'string' ? r : null;
     },
-    setLastRoom: (room: LastRoom) => set(local, lastRoomKey, JSON.stringify(room)),
+    /** Son girilen oda + "Odalarım" listesine ekler/günceller (en yeni üstte). */
+    setLastRoom(room: LastRoom) {
+      set(local, lastRoomKey, JSON.stringify(room));
+      const list = readRooms().filter((r) => r.id !== room.id);
+      set(local, roomsKey, JSON.stringify([{ id: room.id, name: room.name, at: Date.now() }, ...list].slice(0, 50)));
+    },
+    /** Bu cihazın odaları ("Odalarım"), en son girilen üstte. Eski sürümden kalan son oda da eklenir. */
+    getRooms(): SavedRoom[] {
+      const list = readRooms();
+      const last = json<LastRoom>(get(local, lastRoomKey));
+      if (last && typeof last.id === 'string' && !list.some((r) => r.id === last.id)) list.push({ id: last.id, name: last.name, at: 0 });
+      return list.sort((a, b) => b.at - a.at);
+    },
+    /** Odayı listeden ve bu cihazın kayıtlarından kaldırır (oda silindiyse ya da çıkarıldıysa). */
+    forgetRoom(roomId: string) {
+      set(local, roomsKey, JSON.stringify(readRooms().filter((r) => r.id !== roomId)));
+      const last = json<LastRoom>(get(local, lastRoomKey));
+      if (last?.id === roomId) del(local, lastRoomKey);
+      del(local, roomKey(roomId));
+    },
 
     /** Bu önekle başlayan bütün anahtarları siler (local + session). */
     clearAll() {

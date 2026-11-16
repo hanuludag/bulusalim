@@ -52,3 +52,18 @@
   flex-direction: column;
   gap: 4px;
 }
+
+.time-who {
+  padding-top: var(--sp-6);
+  padding-bottom: var(--sp-4);
+}
+.res {
+  padding-bottom: var(--sp-6);
+}
+.res-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  border-top: 1px solid var(--c-line);
+  padding-top: var(--sp-3);
+}

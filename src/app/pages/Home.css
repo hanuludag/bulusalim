@@ -20,3 +20,24 @@
   flex-direction: column;
   gap: var(--sp-6);
 }
+.home-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: -6px;
+}
+.room-list {
+  margin-top: var(--sp-5);
+  border-top: 1px solid var(--c-line);
+}
+.room-item {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  border-bottom: 1px solid var(--c-line);
+  color: var(--c-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}

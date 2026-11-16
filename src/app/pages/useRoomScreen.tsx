@@ -11,6 +11,7 @@ import { useRoom } from '../../core/useRoom';
 import { useToast } from '../../core/useToast';
 import { shareToWhatsApp } from '../../core/share';
 import { Loading, Offline, RoomNotFound } from '../components/Status';
+import { RoomMenu } from '../components/RoomMenu';
 
 export interface RoomCtx {
   snap: RoomSnapshot;
@@ -19,12 +20,18 @@ export interface RoomCtx {
   refresh: () => Promise<void>;
   mutate: (apply: (s: RoomSnapshot) => RoomSnapshot, action: () => Promise<unknown>) => Promise<boolean>;
   shareFirst: () => void;
+  isCreator: boolean;
+  /** TopBar'a verilecek ⋯ düğmesi */
+  barMenu: { label: string; onClick: () => void };
+  /** Ekranın en altına konacak oda menüsü paneli */
+  menu: ReactNode;
 }
 
 export function useRoomScreen(): { gate: ReactNode; ctx: RoomCtx | null } {
   const { roomId } = useParams();
   const toast = useToast();
   const { status, data, refresh } = useRoom(store, roomId);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pending, setPending] = useState<{ id: number; apply: (s: RoomSnapshot) => RoomSnapshot }[]>([]);
   const counter = useRef(0);
   const view = useMemo(() => (data ? pending.reduce((s, p) => p.apply(s), data) : null), [data, pending]);
@@ -34,6 +41,10 @@ export function useRoomScreen(): { gate: ReactNode; ctx: RoomCtx | null } {
   useEffect(() => {
     if (view && me) device.setLastRoom({ id: view.room.id, name: view.room.name });
   }, [view, me]);
+  // Oda silindiyse "Odalarım" listesinden de çıkar
+  useEffect(() => {
+    if (status === 'not-found' && roomId) device.forgetRoom(roomId);
+  }, [status, roomId]);
 
   const mutate = useCallback<RoomCtx['mutate']>(
     async (apply, action) => {
@@ -70,6 +81,9 @@ export function useRoomScreen(): { gate: ReactNode; ctx: RoomCtx | null } {
       refresh,
       mutate,
       shareFirst: () => void shareToWhatsApp(firstShareText(view.room.name, link)),
+      isCreator: view.room.createdBy === me.id,
+      barMenu: { label: copy.menu.open, onClick: () => setMenuOpen(true) },
+      menu: <RoomMenu open={menuOpen} onClose={() => setMenuOpen(false)} snap={view} me={me} refresh={refresh} />,
     },
   };
 }

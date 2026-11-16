@@ -3,7 +3,9 @@
 // eski biçimdeki veriyi yanlışlıkla okumayı önler: yeni sürüm yeni anahtara yazar, eskisini siler.
 import { createSync, type Sync } from '../core/sync';
 import { cleanName } from '../core/names';
-import { SaveError, type DataStore } from './store';
+import { MAX_DAYS, SaveError, type DataStore } from './store';
+import { normalizeDays, roomDays } from './days';
+import { weekDays } from '../core/format';
 import type { Availability, ID, Idea, Member, Room, RoomSnapshot, Vote } from './types';
 
 export const DB_KEY = 'bs:db:v2';
@@ -90,14 +92,25 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
     if (!room) throw new Error(`Oda yok: ${roomId}`);
     return room;
   };
+  const mustCreator = (db: DB, roomId: ID, memberId: ID) => {
+    const room = mustRoom(db, roomId);
+    if (room.createdBy !== memberId) throw new SaveError('not-creator');
+    return room;
+  };
+  function checkDays(days: string[]) {
+    const list = normalizeDays(days);
+    if (list.length < 1 || list.length > MAX_DAYS) throw new SaveError('bad-days');
+    return list;
+  }
 
   return {
-    async createRoom({ name, startDate, creatorName }) {
+    async createRoom({ name, startDate, creatorName, days }) {
+      const list = checkDays(days ?? weekDays(startDate));
       return write(null, (db) => {
         const t = now();
         const roomId = newId();
         const creator: Member = { id: newId(), roomId, name: cleanName(creatorName), createdAt: t };
-        const room: Room = { id: roomId, name: name.trim(), startDate, createdBy: creator.id, createdAt: t };
+        const room: Room = { id: roomId, name: name.trim(), startDate: list[0], days: list, createdBy: creator.id, createdAt: t };
         db.rooms.push(room);
         db.members.push(creator);
         return { room, creator };
@@ -141,11 +154,11 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
       });
     },
 
-    async updateIdea(ideaId, patch) {
+    async updateIdea(ideaId, memberId, patch) {
       const roomId = load().ideas.find((i) => i.id === ideaId)?.roomId ?? null;
       return write(roomId, (db) => {
-        const idea = db.ideas.find((i) => i.id === ideaId);
-        if (!idea) throw new Error(`Fikir yok: ${ideaId}`);
+        const idea = db.ideas.find((i) => i.id === ideaId && i.addedBy === memberId);
+        if (!idea) throw new SaveError('idea-not-found');
         if (patch.name !== undefined) idea.name = patch.name.trim();
         if (patch.place !== undefined) idea.place = patch.place.trim();
         if (patch.note !== undefined) idea.note = patch.note.trim().slice(0, 140);
@@ -153,9 +166,12 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
       });
     },
 
-    async deleteIdea(ideaId) {
+    async deleteIdea(ideaId, memberId) {
       const roomId = load().ideas.find((i) => i.id === ideaId)?.roomId ?? null;
       await write(roomId, (db) => {
+        const idea = db.ideas.find((i) => i.id === ideaId);
+        const room = idea && db.rooms.find((r) => r.id === idea.roomId);
+        if (!idea || (idea.addedBy !== memberId && room?.createdBy !== memberId)) throw new SaveError('idea-not-found');
         db.ideas = db.ideas.filter((i) => i.id !== ideaId);
         db.votes = db.votes.filter((v) => v.ideaId !== ideaId);
       });
@@ -168,8 +184,48 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
       });
     },
 
+    async renameRoom(roomId, memberId, name) {
+      if (!name.trim()) throw new SaveError('empty-name');
+      await write(roomId, (db) => {
+        mustCreator(db, roomId, memberId).name = name.trim().slice(0, 40);
+      });
+    },
+
+    async setDays(roomId, memberId, days) {
+      const list = checkDays(days);
+      await write(roomId, (db) => {
+        const room = mustCreator(db, roomId, memberId);
+        room.days = list;
+        room.startDate = list[0];
+        db.availability = db.availability.filter((a) => a.roomId !== roomId || list.includes(a.day));
+      });
+    },
+
+    async removeMember(roomId, memberId, targetId) {
+      if (targetId === memberId) throw new SaveError('cannot-remove-self');
+      await write(roomId, (db) => {
+        mustCreator(db, roomId, memberId);
+        db.members = db.members.filter((m) => !(m.id === targetId && m.roomId === roomId));
+        db.votes = db.votes.filter((v) => v.memberId !== targetId);
+        db.availability = db.availability.filter((a) => a.memberId !== targetId);
+      });
+    },
+
+    async deleteRoom(roomId, memberId) {
+      await write(roomId, (db) => {
+        mustCreator(db, roomId, memberId);
+        const keep = <T extends { roomId: ID }>(l: T[]) => l.filter((x) => x.roomId !== roomId);
+        db.rooms = db.rooms.filter((r) => r.id !== roomId);
+        db.members = keep(db.members);
+        db.ideas = keep(db.ideas);
+        db.votes = keep(db.votes);
+        db.availability = keep(db.availability);
+      });
+    },
+
     async toggleAvailability({ roomId, memberId, day, slot }) {
       return write(roomId, (db) => {
+        if (!roomDays(mustRoom(db, roomId)).includes(day)) throw new SaveError('day-not-in-room');
         const i = db.availability.findIndex((a) => a.memberId === memberId && a.day === day && a.slot === slot);
         if (i >= 0) {
           db.availability.splice(i, 1);

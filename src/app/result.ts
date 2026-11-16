@@ -1,5 +1,5 @@
 // Sonuç hesabı (v2). Saf fonksiyon: aynı girdi → aynı çıktı. Bütün ekranlar sonucu buradan alır.
-import { weekDays } from '../core/format';
+import { roomDays } from './days';
 import { SLOTS } from './slots';
 import type { ID, Idea, RoomSnapshot, Slot } from './types';
 
@@ -13,7 +13,7 @@ export interface Result {
   isFinal: boolean;
   ideas: IdeaResult[]; // sıralı
   winnerIdea: Idea | null;
-  slots: SlotResult[]; // 7 gün × 2 dilim = 14, gün sırasıyla
+  slots: SlotResult[]; // oda günleri × 2 dilim, gün sırasıyla
   bestSlot: { day: string; slot: Slot; freeCount: number } | null;
   allFreeSlots: Array<{ day: string; slot: Slot }>;
 }
@@ -21,7 +21,7 @@ export interface Result {
 export function computeResult(snap: RoomSnapshot): Result {
   const memberIds = snap.members.map((m) => m.id);
   const isMember = new Set(memberIds);
-  const days = weekDays(snap.room.startDate);
+  const days = roomDays(snap.room);
   const daySet = new Set(days);
   const votes = snap.votes.filter((v) => isMember.has(v.memberId));
   const avail = snap.availability.filter((a) => isMember.has(a.memberId) && daySet.has(a.day));

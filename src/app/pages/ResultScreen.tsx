@@ -1,4 +1,4 @@
-// Sonuç ekranı: sadece kazanan + durum + tek buton.
+// Sonuç ekranı: kazanan + durum + tek buton; altında bütün fikirler ve en uygun zamanlar (dokununca kim).
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { copy } from '../copy';
@@ -9,6 +9,7 @@ import { formatRatio, formatShortDay } from '../../core/format';
 import { shareToWhatsApp } from '../../core/share';
 import { TopBar } from '../../core/components/TopBar';
 import { useRoomScreen } from './useRoomScreen';
+import { IdeaWho, SlotWho } from '../components/WhoList';
 import './screens.css';
 
 export default function ResultScreen() {
@@ -25,8 +26,21 @@ export default function ResultScreen() {
       back={{ to: `${base}/zaman`, label: copy.bar.back }}
       link={{ to: `${base}/fikirler`, label: copy.bar.myAnswers }}
       share={{ label: copy.bar.share, onClick: shareFirst }}
+      menu={ctx.barMenu}
     />
   );
+
+  const nav = (
+    <nav className="res-nav">
+      <Link to="/" className="tb sm">
+        {copy.result.myRooms}
+      </Link>
+      <Link to="/yeni" className="tb sm">
+        {copy.result.newRoom}
+      </Link>
+    </nav>
+  );
+  const bestTimes = [...r.slots].filter((s) => s.freeCount > 0).sort((a, b) => b.freeCount - a.freeCount).slice(0, 5);
 
   if (r.voters.length === 0) {
     return (
@@ -40,7 +54,9 @@ export default function ResultScreen() {
           <Link to={`${base}/fikirler`} className="btn">
             {copy.result.goIdeas}
           </Link>
+          {nav}
         </section>
+        {ctx.menu}
       </main>
     );
   }
@@ -80,7 +96,11 @@ export default function ResultScreen() {
         >
           {r.isFinal ? copy.result.share : copy.result.remind}
         </button>
+        {r.ideas.length > 0 && <IdeaWho snap={snap} ideas={r.ideas} title={copy.result.ideasTitle} />}
+        <SlotWho snap={snap} slots={bestTimes} title={copy.result.timesTitle} />
+        {nav}
       </section>
+      {ctx.menu}
     </main>
   );
 }

@@ -29,7 +29,9 @@ export default function IdeasScreen() {
   const base = `/r/${snap.room.id}`;
 
   const myVote = (ideaId: string) => snap.votes.find((v) => v.ideaId === ideaId && v.memberId === me.id)?.value ?? null;
-  const count = (ideaId: string, value: VoteValue) => snap.votes.filter((v) => v.ideaId === ideaId && v.value === value).length;
+  const nameOf = (id: string | null) => snap.members.find((m) => m.id === id)?.name ?? '';
+  const voters = (ideaId: string, value: VoteValue) =>
+    snap.members.filter((m) => snap.votes.some((v) => v.ideaId === ideaId && v.memberId === m.id && v.value === value)).map((m) => m.name);
 
   function vote(idea: Idea, v: VoteValue) {
     const value = myVote(idea.id) === v ? null : v; // aynı cevaba tekrar basmak kaldırır
@@ -63,7 +65,7 @@ export default function IdeasScreen() {
   const save = (d: IdeaDraft) =>
     run(() =>
       sheet.open && sheet.editing
-        ? store.updateIdea(sheet.editing.id, { name: d.name, place: d.place, note: d.note })
+        ? store.updateIdea(sheet.editing.id, me.id, { name: d.name, place: d.place, note: d.note })
         : store.addIdea(snap.room.id, { name: d.name, place: d.place, note: d.note, suggestionId: d.suggestionId ?? undefined, addedBy: me.id }),
     );
 
@@ -73,7 +75,7 @@ export default function IdeasScreen() {
     if (idea)
       await mutate(
         (s) => ({ ...s, ideas: s.ideas.filter((i) => i.id !== idea.id), votes: s.votes.filter((v) => v.ideaId !== idea.id) }),
-        () => store.deleteIdea(idea.id),
+        () => store.deleteIdea(idea.id, me.id),
       );
   }
 
@@ -86,6 +88,7 @@ export default function IdeasScreen() {
         title={snap.room.name}
         link={{ to: `${base}/sonuc`, label: copy.bar.result }}
         share={{ label: copy.bar.share, onClick: shareFirst }}
+        menu={ctx.barMenu}
       />
       <div className="pad screen-head">
         <h1 className="h1">{copy.ideas.title}</h1>
@@ -103,9 +106,11 @@ export default function IdeasScreen() {
               key={idea.id}
               idea={idea}
               myVote={myVote(idea.id)}
-              yes={count(idea.id, 'yes')}
-              no={count(idea.id, 'no')}
-              mine={idea.addedBy === me.id}
+              yesNames={voters(idea.id, 'yes')}
+              noNames={voters(idea.id, 'no')}
+              addedBy={nameOf(idea.addedBy)}
+              canEdit={idea.addedBy === me.id}
+              canDelete={idea.addedBy === me.id || ctx.isCreator}
               onVote={(v) => vote(idea, v)}
               onEdit={() => setSheet({ open: true, editing: idea })}
               onDelete={() => setToDelete(idea)}
@@ -149,6 +154,7 @@ export default function IdeasScreen() {
         onConfirm={() => void confirmDelete()}
         onCancel={() => setToDelete(null)}
       />
+      {ctx.menu}
     </main>
   );
 }

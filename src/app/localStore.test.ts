@@ -42,9 +42,11 @@ describe('localStore v2', () => {
     await s.setVote({ roomId: room.id, memberId: kaan.id, ideaId: idea.id, value: null });
     expect((await s.getRoom(room.id))!.votes).toHaveLength(0);
 
-    expect((await s.updateIdea(idea.id, { place: 'Kadıköy' })).place).toBe('Kadıköy');
+    await expect(s.updateIdea(idea.id, kaan.id, { place: 'X' })).rejects.toBeInstanceOf(SaveError); // başkasının fikri
+    expect((await s.updateIdea(idea.id, creator.id, { place: 'Kadıköy' })).place).toBe('Kadıköy');
     await s.setVote({ roomId: room.id, memberId: creator.id, ideaId: idea.id, value: 'yes' });
-    await s.deleteIdea(idea.id);
+    await expect(s.deleteIdea(idea.id, kaan.id)).rejects.toBeInstanceOf(SaveError);
+    await s.deleteIdea(idea.id, creator.id);
     snap = (await s.getRoom(room.id))!;
     expect(snap.ideas).toHaveLength(0);
     expect(snap.votes).toHaveLength(0);
@@ -52,6 +54,38 @@ describe('localStore v2', () => {
     expect(await s.toggleAvailability({ roomId: room.id, memberId: kaan.id, day: '2026-11-16', slot: 'aksam' })).toBe(true);
     expect(await s.toggleAvailability({ roomId: room.id, memberId: kaan.id, day: '2026-11-16', slot: 'aksam' })).toBe(false);
     expect((await s.getRoom(room.id))!.availability).toHaveLength(0);
+  });
+
+  it('günler + kurucu yetkileri: ad, günler, üye çıkar, fikir sil, oda sil', async () => {
+    const s = createLocalStore({ sync: tab() });
+    const days = ['2026-11-22', '2026-11-21', '2026-11-21'];
+    const { room, creator } = await s.createRoom({ name: 'A', startDate: '2026-11-16', creatorName: 'E', days });
+    expect(room.days).toEqual(['2026-11-21', '2026-11-22']);
+    expect(room.startDate).toBe('2026-11-21');
+    const kaan = await s.joinRoom(room.id, 'Kaan');
+    await expect(s.toggleAvailability({ roomId: room.id, memberId: kaan.id, day: '2026-11-16', slot: 'aksam' })).rejects.toBeInstanceOf(SaveError);
+    await s.toggleAvailability({ roomId: room.id, memberId: kaan.id, day: '2026-11-21', slot: 'aksam' });
+    await s.toggleAvailability({ roomId: room.id, memberId: kaan.id, day: '2026-11-22', slot: 'aksam' });
+
+    await expect(s.renameRoom(room.id, kaan.id, 'B')).rejects.toBeInstanceOf(SaveError);
+    await s.renameRoom(room.id, creator.id, ' B ');
+    await s.setDays(room.id, creator.id, ['2026-11-22', '2026-11-29']);
+    let snap = (await s.getRoom(room.id))!;
+    expect(snap.room.name).toBe('B');
+    expect(snap.availability.map((a) => a.day)).toEqual(['2026-11-22']); // çıkarılan günün seçimi gitti
+    await expect(s.setDays(room.id, creator.id, [])).rejects.toBeInstanceOf(SaveError);
+
+    const idea = await s.addIdea(room.id, { name: 'Sinema', addedBy: kaan.id });
+    await s.deleteIdea(idea.id, creator.id); // kurucu başkasının fikrini silebilir
+    await expect(s.removeMember(room.id, creator.id, creator.id)).rejects.toBeInstanceOf(SaveError);
+    await s.removeMember(room.id, creator.id, kaan.id);
+    snap = (await s.getRoom(room.id))!;
+    expect(snap.members.map((m) => m.name)).toEqual(['E']);
+    expect(snap.availability).toHaveLength(0);
+
+    await expect(s.deleteRoom(room.id, kaan.id)).rejects.toBeInstanceOf(SaveError);
+    await s.deleteRoom(room.id, creator.id);
+    expect(await s.getRoom(room.id)).toBeNull();
   });
 
   it('eski bs:db:v1 silinir', () => {

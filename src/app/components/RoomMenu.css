@@ -1,0 +1,48 @@
+.rm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  max-height: 75dvh;
+  overflow-y: auto;
+}
+.rm-title {
+  overflow-wrap: anywhere;
+}
+.rm-links {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--c-line);
+}
+.rm-row {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-bottom: 1px solid var(--c-line);
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: 500 var(--fs-md) var(--f-sans);
+  color: var(--c-ink);
+}
+.rm-row.danger {
+  color: var(--c-accent);
+}
+.rm-sec {
+  padding: var(--sp-2) 0;
+}
+.rm-member {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  border-bottom: 1px solid var(--c-line);
+  overflow-wrap: anywhere;
+}
+.rm-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}

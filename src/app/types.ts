@@ -4,7 +4,11 @@ export type Slot = 'gunduz' | 'aksam';
 export type VoteValue = 'yes' | 'no';
 export type ScreenKey = 'fikirler' | 'zaman' | 'sonuc';
 
-export interface Room { id: ID; name: string; startDate: string /* YYYY-MM-DD, oda kurulan gün */; createdBy: ID; createdAt: number }
+export interface Room {
+  id: ID; name: string; startDate: string /* YYYY-MM-DD, ilk gün */;
+  days?: string[] /* buluşulabilecek günler, sıralı; boş/yoksa startDate'ten 7 gün (eski odalar) */;
+  createdBy: ID; createdAt: number;
+}
 export interface Member { id: ID; roomId: ID; name: string; createdAt: number }
 export interface Idea {
   id: ID; roomId: ID; name: string; place: string; note: string /* ≤140 */;

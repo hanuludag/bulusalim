@@ -21,12 +21,19 @@ Testler: `npm test` · Yayın paketi: `npm run build` (çıktı `dist/`, Netlify
 ## Ekranlar
 | Ekran | İş | Kırmızı buton |
 |---|---|---|
-| Ana sayfa | Oda adı (hazır "Buluşma") + adın | Oda kur |
+| Odalarım (`/`) | Bu telefonda girdiğin bütün odalar. Hiç oda yoksa doğrudan "Yeni oda" | Yeni oda kur |
+| Yeni oda (`/yeni`) | Oda adı (hazır "Buluşma") + adın + **günler** (takvimden gün gün, en fazla 14; hazır: "Önümüzdeki 7 gün", "Hafta sonları") | Oda kur |
 | Oda hazır | Linki paylaş | WhatsApp'ta paylaş |
 | Katıl | Adını yaz | Katıl |
 | Fikirler | Onaylıyorum / Onaylamıyorum | Sıradaki: Zaman → (ilk cevaptan sonra) |
-| Zaman | 7 gün × Gündüz 10–17 / Akşam 17–21 | Sonucu gör → |
-| Sonuç | Kazanan + durum | Gruba hatırlat / Sonucu paylaş |
+| Zaman | Oda günleri × Gündüz 10–17 / Akşam 17–21, altında "Kim ne zaman boş" | Sonucu gör → |
+| Sonuç | Kazanan + durum + bütün fikirler + en uygun 5 zaman (dokununca kim) + Odalarım / Yeni oda kur | Gruba hatırlat / Sonucu paylaş |
+
+**Kim ne dedi:** Fikirlerde "Kim?" → ✓ onaylayanlar, ✗ onaylamayanlar. Zaman ve Sonuç'ta satıra dokununca o saatte boş olanlar.
+
+**Oda menüsü (⋯):** herkes: Odalarım, Yeni oda kur, üye listesi. Sadece **odayı kuran**: oda adını değiştir, günleri değiştir
+(çıkarılan günlerin saat seçimleri silinir), üye çıkar (onayları/saatleri silinir, fikirleri kalır), başkasının fikrini sil, **odayı sil** (herkes için).
+Diğerleri: "Listemden kaldır" (oda silinmez).
 
 Kurallar (`src/app/result.ts`): fikir sırası **onay çok → onaylamama az → eski önce**; kazanan en az 1 onay almış olmalı.
 En iyi zaman en çok kişinin boş olduğu dilim; eşitlikte erken gün, sonra gündüz. Cevap verdi = en az 1 onay/onaylamama ya da 1 saat.

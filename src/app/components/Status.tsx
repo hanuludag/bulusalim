@@ -1,5 +1,7 @@
 // Yükleniyor ve "Oda bulunamadı" hâlleri.
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { device } from '../runtime';
 import { copy } from '../copy';
 import { buttonClass } from '../../core/components/buttonClass';
 import '../../core/components/Button.css';
@@ -35,6 +37,11 @@ export function Offline({ onRetry }: { onRetry: () => void }) {
 }
 
 export function RoomNotFound() {
+  // Silinmiş odayı bu cihazın "Odalarım" listesinden çıkar
+  const { roomId } = useParams();
+  useEffect(() => {
+    if (roomId) device.forgetRoom(roomId);
+  }, [roomId]);
   return (
     <main className="page">
       <header className="bar">

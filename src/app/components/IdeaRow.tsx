@@ -1,4 +1,5 @@
-// Fikir satırı: ad, yer, not, ⋯ menüsü (sadece ekleyene), Onaylıyorum / Onaylamıyorum.
+// Fikir satırı: ad, yer, not, kim ekledi, ⋯ menüsü (ekleyen düzenler; ekleyen ya da kurucu siler),
+// Onaylıyorum / Onaylamıyorum, "Kim?" ile kimin ne dediği.
 import { useEffect, useRef, useState } from 'react';
 import { copy } from '../copy';
 import type { Idea, VoteValue } from '../types';
@@ -8,16 +9,21 @@ import './IdeaRow.css';
 export interface IdeaRowProps {
   idea: Idea;
   myVote: VoteValue | null;
-  yes: number;
-  no: number;
-  mine: boolean;
+  yesNames: string[];
+  noNames: string[];
+  addedBy: string;
+  canEdit: boolean;
+  canDelete: boolean;
   onVote: (v: VoteValue) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function IdeaRow({ idea, myVote, yes, no, mine, onVote, onEdit, onDelete }: IdeaRowProps) {
+export function IdeaRow({ idea, myVote, yesNames, noNames, addedBy, canEdit, canDelete, onVote, onEdit, onDelete }: IdeaRowProps) {
   const [menu, setMenu] = useState(false);
+  const [who, setWho] = useState(false);
+  const yes = yesNames.length;
+  const no = noNames.length;
   const menuRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
@@ -54,8 +60,9 @@ export function IdeaRow({ idea, myVote, yes, no, mine, onVote, onEdit, onDelete 
           <p className="nm">{idea.name}</p>
           {idea.place && <p className="sec">{idea.place}</p>}
           {idea.note && <p className="sec s13">{idea.note}</p>}
+          {addedBy && <p className="sec s13">{copy.ideas.addedBy(addedBy)}</p>}
         </div>
-        {mine && (
+        {(canEdit || canDelete) && (
           <button
             ref={btnRef}
             className={`ib${menu ? ' ib-on' : ''}`}
@@ -70,12 +77,16 @@ export function IdeaRow({ idea, myVote, yes, no, mine, onVote, onEdit, onDelete 
         )}
         {menu && (
           <div ref={menuRef} className="idea-menu" role="menu">
-            <button role="menuitem" type="button" onClick={pick(onEdit)}>
-              {copy.ideas.edit}
-            </button>
-            <button role="menuitem" type="button" onClick={pick(onDelete)}>
-              {copy.ideas.delete}
-            </button>
+            {canEdit && (
+              <button role="menuitem" type="button" onClick={pick(onEdit)}>
+                {copy.ideas.edit}
+              </button>
+            )}
+            {canDelete && (
+              <button role="menuitem" type="button" onClick={pick(onDelete)}>
+                {copy.ideas.delete}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -89,6 +100,19 @@ export function IdeaRow({ idea, myVote, yes, no, mine, onVote, onEdit, onDelete 
           {no > 0 && <span className="mono"> {no}</span>}
         </button>
       </div>
+      {yes + no > 0 && (
+        <div className="who">
+          <button className="tb sm who-btn" type="button" aria-expanded={who} onClick={() => setWho((w) => !w)}>
+            {who ? copy.who.hide : copy.who.show}
+          </button>
+          {who && (
+            <div className="who-list s13">
+              {yes > 0 && <p>{copy.who.yes(yesNames.join(', '))}</p>}
+              {no > 0 && <p className="sec">{copy.who.no(noNames.join(', '))}</p>}
+            </div>
+          )}
+        </div>
+      )}
     </li>
   );
 }

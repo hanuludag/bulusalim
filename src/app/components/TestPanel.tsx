@@ -5,7 +5,8 @@ import { device, isOnline, localStore, store } from '../runtime';
 import { DEMO_NAMES, DEMO_ROOM_NAME, seedDemo, type DemoKind } from '../demo';
 import { SLOTS } from '../slots';
 import type { Member, RoomSnapshot } from '../types';
-import { todayString, weekDays } from '../../core/format';
+import { todayString } from '../../core/format';
+import { roomDays } from '../days';
 import { findByName } from '../../core/names';
 import { Sheet } from '../../core/components/Sheet';
 import { ConfirmDialog } from '../../core/components/ConfirmDialog';
@@ -52,7 +53,7 @@ export default function TestPanel() {
     if (!roomId || !snap) return;
     say('Çalışıyor…');
     const others = snap.members.filter((m) => m.id !== currentId);
-    const days = weekDays(snap.room.startDate);
+    const days = roomDays(snap.room);
     // Önce eski cevapları temizle
     await Promise.allSettled([
       ...snap.votes.filter((v) => v.memberId !== currentId).map((v) => store.setVote({ roomId, memberId: v.memberId, ideaId: v.ideaId, value: null })),

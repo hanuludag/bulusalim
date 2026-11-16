@@ -69,3 +69,16 @@
   border-color: var(--c-ink);
   color: var(--c-on-accent);
 }
+
+.who {
+  margin-top: var(--sp-2);
+}
+.who-btn {
+  margin-left: calc(-1 * var(--sp-2));
+}
+.who-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}

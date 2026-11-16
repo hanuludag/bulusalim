@@ -56,11 +56,12 @@ export function createSupabaseStore(url: string, key: string): DataStore {
   }
 
   return {
-    async createRoom({ name, startDate, creatorName }) {
+    async createRoom({ name, startDate, creatorName, days }) {
       return rpc<{ room: Room; creator: Member }>('bs_create_room', {
         p_name: name,
         p_start_date: startDate,
         p_creator_name: creatorName,
+        p_days: days ?? null,
       });
     },
 
@@ -89,9 +90,10 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       return idea;
     },
 
-    async updateIdea(ideaId, patch) {
+    async updateIdea(ideaId, memberId, patch) {
       const idea = await rpc<Idea>('bs_update_idea', {
         p_idea: ideaId,
+        p_member: memberId,
         p_name: patch.name ?? null,
         p_place: patch.place ?? null,
         p_note: patch.note ?? null,
@@ -100,8 +102,28 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       return idea;
     },
 
-    async deleteIdea(ideaId) {
-      const roomId = await rpc<string | null>('bs_delete_idea', { p_idea: ideaId });
+    async deleteIdea(ideaId, memberId) {
+      const roomId = await rpc<string | null>('bs_delete_idea', { p_idea: ideaId, p_member: memberId });
+      changed(roomId);
+    },
+
+    async renameRoom(roomId, memberId, name) {
+      await rpc('bs_rename_room', { p_room: roomId, p_member: memberId, p_name: name });
+      changed(roomId);
+    },
+
+    async setDays(roomId, memberId, days) {
+      await rpc('bs_set_days', { p_room: roomId, p_member: memberId, p_days: days });
+      changed(roomId);
+    },
+
+    async removeMember(roomId, memberId, targetId) {
+      await rpc('bs_remove_member', { p_room: roomId, p_member: memberId, p_target: targetId });
+      changed(roomId);
+    },
+
+    async deleteRoom(roomId, memberId) {
+      await rpc('bs_delete_room', { p_room: roomId, p_member: memberId });
       changed(roomId);
     },
 

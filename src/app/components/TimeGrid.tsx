@@ -1,15 +1,16 @@
-// Zaman ızgarası: 7 gün × 2 dilim. Kutuda sadece boş kişi sayısı. Tek dokunuş seç/kaldır.
+// Zaman ızgarası: oda günleri × 2 dilim. Kutuda sadece boş kişi sayısı. Tek dokunuş seç/kaldır.
 import { copy } from '../copy';
 import { SLOTS, slotHours, slotLabel, slotLower } from '../slots';
 import type { Result } from '../result';
 import type { RoomSnapshot, Slot } from '../types';
-import { formatDate, weekDays } from '../../core/format';
+import { formatDate } from '../../core/format';
+import { roomDays } from '../days';
 import './TimeGrid.css';
 
 export interface TimeGridProps { result: Result; snap: RoomSnapshot; meId: string; onToggle: (day: string, slot: Slot) => void }
 
 export function TimeGrid({ result, snap, meId, onToggle }: TimeGridProps) {
-  const days = weekDays(snap.room.startDate);
+  const days = roomDays(snap.room);
   return (
     <div className="tgrid">
       <div className="tg tg-head" aria-hidden="true">

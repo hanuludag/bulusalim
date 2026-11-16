@@ -5,6 +5,7 @@ import { ErrorBoundary } from './core/ErrorBoundary';
 import { ToastProvider } from './core/useToast';
 import { copy } from './app/copy';
 import Home from './app/pages/Home';
+import CreateRoom from './app/pages/CreateRoom';
 import RoomReady from './app/pages/RoomReady';
 import RoomGate from './app/pages/RoomGate';
 import IdeasScreen from './app/pages/IdeasScreen';
@@ -20,6 +21,7 @@ export default function App() {
       <ToastProvider>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/yeni" element={<CreateRoom />} />
           <Route path="/r/:roomId" element={<RoomGate />} />
           <Route path="/r/:roomId/hazir" element={<RoomReady />} />
           <Route path="/r/:roomId/fikirler" element={<IdeasScreen />} />

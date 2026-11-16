@@ -1,6 +1,6 @@
-// Üst çubuk: (isteğe bağlı geri oku) + başlık · metin link + paylaş ikonu. Metinler dışarıdan gelir.
+// Üst çubuk: (isteğe bağlı geri oku) + başlık · metin link + paylaş ikonu + (isteğe bağlı ⋯ menü). Metinler dışarıdan gelir.
 import { Link } from 'react-router-dom';
-import { BackIcon, ShareIcon } from './Icons';
+import { BackIcon, DotsIcon, ShareIcon } from './Icons';
 import './TopBar.css';
 
 export interface TopBarProps {
@@ -8,9 +8,10 @@ export interface TopBarProps {
   back?: { to: string; label: string };
   link: { to: string; label: string };
   share: { label: string; onClick: () => void };
+  menu?: { label: string; onClick: () => void };
 }
 
-export function TopBar({ title, back, link, share }: TopBarProps) {
+export function TopBar({ title, back, link, share, menu }: TopBarProps) {
   return (
     <header className="topbar">
       {back && (
@@ -25,6 +26,11 @@ export function TopBar({ title, back, link, share }: TopBarProps) {
       <button className="ib" type="button" aria-label={share.label} onClick={share.onClick}>
         <ShareIcon />
       </button>
+      {menu && (
+        <button className="ib" type="button" aria-label={menu.label} aria-haspopup="dialog" onClick={menu.onClick}>
+          <DotsIcon />
+        </button>
+      )}
     </header>
   );
 }
