@@ -1,0 +1,3 @@
+# Oda sayfaları arkadaş grubuna özel: arama motorları listelemesin.
+User-agent: *
+Disallow: /r/
