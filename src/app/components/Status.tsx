@@ -17,6 +17,23 @@ export function Loading() {
   );
 }
 
+export function Offline({ onRetry }: { onRetry: () => void }) {
+  return (
+    <main className="page">
+      <header className="bar">
+        <Link to="/" className="logo">
+          {copy.common.logo}
+        </Link>
+      </header>
+      <div className="center-msg">
+        <button className={buttonClass('secondary', true)} type="button" onClick={onRetry}>
+          {copy.common.offline}
+        </button>
+      </div>
+    </main>
+  );
+}
+
 export function RoomNotFound() {
   return (
     <main className="page">

@@ -2,11 +2,10 @@
 // Tasarım dışı bir geliştirici aracıdır; metinleri bilerek copy.ts'te değil.
 import { useEffect, useState } from 'react';
 import { useMatch, useNavigate } from 'react-router-dom';
-import { device, store } from '../runtime';
-import { buildDemo, type DemoKind } from '../demo';
-import { DEMO_NAMES } from '../demo';
+import { device, isOnline, localStore, store } from '../runtime';
+import { DEMO_NAMES, seedDemo, type DemoKind } from '../demo';
 import { SLOTS } from '../slots';
-import type { Member, RoomSnapshot, Score } from '../types';
+import type { Member, RoomSnapshot, Score, Slot } from '../types';
 import { todayString, weekDays } from '../../core/format';
 import { findByName } from '../../core/names';
 import { Sheet } from '../../core/components/Sheet';
@@ -21,7 +20,8 @@ export default function TestPanel() {
   const roomId = match?.params.roomId ?? null;
   const [open, setOpen] = useState(false);
   const [snap, setSnap] = useState<RoomSnapshot | null>(null);
-  const [latency, setLatency] = useState(store.getLatency());
+  const [latency, setLatency] = useState(localStore?.getLatency() ?? false);
+  const [busy, setBusy] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [msg, setMsg] = useState('');
 
@@ -59,51 +59,56 @@ export default function TestPanel() {
 
   async function randomAnswers() {
     if (!roomId || !snap) return;
+    setBusy(true);
     const others = snap.members.filter((m) => m.id !== currentId);
     const days = weekDays(snap.room.startDate);
-    await store._write(roomId, (db) => {
-      others.forEach((m, idx) => {
-        // eskileri temizle
-        db.ratings = db.ratings.filter((r) => !(r.roomId === roomId && r.memberId === m.id));
-        db.availability = db.availability.filter((a) => !(a.roomId === roomId && a.memberId === m.id));
-        db.attendance = db.attendance.filter((a) => !(a.roomId === roomId && a.memberId === m.id));
-        // Bazıları bilerek boş kalsın (her 3 kişiden biri) → "eksik sonuç" görülsün
-        if (idx % 3 === 2) return;
-        snap.ideas.forEach((idea) => {
-          if (Math.random() < 0.15) return;
-          const score = pick([2, 3, 3, 4, 4, 5, 5, Math.random() < 0.2 ? 1 : 4]) as Score;
-          db.ratings.push({ roomId, memberId: m.id, ideaId: idea.id, score, updatedAt: Date.now() });
-        });
-        days.forEach((day) =>
-          SLOTS.forEach((slot) => {
-            if (Math.random() < 0.3) db.availability.push({ roomId, memberId: m.id, day, slot });
-          }),
-        );
-        const r = Math.random();
-        if (r < 0.6) db.attendance.push({ roomId, memberId: m.id, status: 'yes' });
-        else if (r < 0.8) db.attendance.push({ roomId, memberId: m.id, status: 'no' });
+    const cleanup: (() => Promise<unknown>)[] = [];
+    const jobs: (() => Promise<unknown>)[] = [];
+    others.forEach((m, idx) => {
+      // Önce eski cevaplarını temizle
+      snap.ratings.filter((r) => r.memberId === m.id && r.score !== null).forEach((r) =>
+        cleanup.push(() => store.setRating({ roomId, memberId: m.id, ideaId: r.ideaId, score: null })));
+      snap.availability.filter((a) => a.memberId === m.id).forEach((a) =>
+        cleanup.push(() => store.toggleAvailability({ roomId, memberId: m.id, day: a.day, slot: a.slot as Slot })));
+      cleanup.push(() => store.setAttendance({ roomId, memberId: m.id, status: null }));
+      // Bazıları bilerek boş kalsın (her 3 kişiden biri) → "eksik sonuç" görülsün
+      if (idx % 3 === 2) return;
+      snap.ideas.forEach((idea) => {
+        if (Math.random() < 0.15) return;
+        const score = pick([2, 3, 3, 4, 4, 5, 5, Math.random() < 0.2 ? 1 : 4]) as Score;
+        jobs.push(() => store.setRating({ roomId, memberId: m.id, ideaId: idea.id, score }));
       });
+      days.forEach((day) =>
+        SLOTS.forEach((slot) => {
+          if (Math.random() < 0.3) jobs.push(() => store.toggleAvailability({ roomId, memberId: m.id, day, slot }));
+        }),
+      );
+      const r = Math.random();
+      if (r < 0.6) jobs.push(() => store.setAttendance({ roomId, memberId: m.id, status: 'yes' }));
+      else if (r < 0.8) jobs.push(() => store.setAttendance({ roomId, memberId: m.id, status: 'no' }));
     });
+    // Önce temizlik biter, sonra yeni cevaplar yazılır (karışmasınlar diye)
+    await Promise.allSettled(cleanup.map((f) => f()));
+    await Promise.allSettled(jobs.map((f) => f()));
+    setBusy(false);
     say('Rastgele cevaplar yazıldı.');
   }
 
   async function demo(kind: DemoKind) {
-    const data = buildDemo(kind, todayString(), () => crypto.randomUUID(), Date.now());
-    await store._write(data.room.id, (db) => {
-      db.rooms.push(data.room);
-      db.members.push(...data.members);
-      db.ideas.push(...data.ideas);
-      db.ratings.push(...data.ratings);
-      db.availability.push(...data.availability);
-      db.attendance.push(...data.attendance);
-      db.items.push(...data.items);
-    });
-    const emirhan = data.members[0];
-    device.bindMember(data.room.id, emirhan.id);
-    device.updateRoomState(data.room.id, { guideDone: true, hints: { rating: true, gridHold: true } });
-    device.setLastRoom({ id: data.room.id, name: data.room.name });
-    setOpen(false);
-    navigate(`/r/${data.room.id}/sonuc`);
+    setBusy(true);
+    try {
+      const { roomId: id, meId } = await seedDemo(store, kind, todayString());
+      device.bindMember(id, meId);
+      device.updateRoomState(id, { guideDone: true, hints: { rating: true, gridHold: true } });
+      device.setLastRoom({ id, name: 'Cumartesi ekibi' });
+      setOpen(false);
+      navigate(`/r/${id}/sonuc`);
+    } catch (e) {
+      console.error(e);
+      say('Demo oda kurulamadı.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   function resetGuide() {
@@ -120,7 +125,7 @@ export default function TestPanel() {
     window.location.assign('/');
   }
 
-  const kb = Math.round(store.usedBytes() / 1024);
+  const kb = localStore ? Math.round(localStore.usedBytes() / 1024) : null;
 
   return (
     <>
@@ -128,7 +133,8 @@ export default function TestPanel() {
         test
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} label="Test paneli">
-        <h2 className="h2">Test paneli</h2>
+        <h2 className="h2">Test paneli · {isOnline ? 'çevrimiçi (Supabase)' : 'çevrimdışı (localStorage)'}</h2>
+        {busy && <p className="sec s13">Çalışıyor…</p>}
         {roomId && snap ? (
           <div className="tp-group">
             <p className="sec s13">Bu sekmede kim olayım?</p>
@@ -173,19 +179,21 @@ export default function TestPanel() {
             </button>
           </div>
           <div className="tp-row">
-            <button
-              type="button"
-              className="btn2 sm"
-              aria-pressed={latency}
-              onClick={() => {
-                store.setLatency(!latency);
-                setLatency(!latency);
-              }}
-            >
-              Yapay gecikme: {latency ? 'açık' : 'kapalı'}
-            </button>
+            {localStore && (
+              <button
+                type="button"
+                className="btn2 sm"
+                aria-pressed={latency}
+                onClick={() => {
+                  localStore?.setLatency(!latency);
+                  setLatency(!latency);
+                }}
+              >
+                Yapay gecikme: {latency ? 'açık' : 'kapalı'}
+              </button>
+            )}
             <button type="button" className="btn2 sm" onClick={() => setConfirmReset(true)}>
-              Her şeyi sil
+              {isOnline ? 'Bu cihazın kayıtlarını sil' : 'Her şeyi sil'}
             </button>
           </div>
         </div>
@@ -194,12 +202,16 @@ export default function TestPanel() {
             {msg}
           </p>
         )}
-        <p className="sec s13 mono">localStorage: ~{kb} KB / ~5000 KB</p>
+        {kb !== null && <p className="sec s13 mono">localStorage: ~{kb} KB / ~5000 KB</p>}
       </Sheet>
       <ConfirmDialog
         open={confirmReset}
-        title="Bütün veriler silinsin mi?"
-        body="Odalar, üyeler ve bu tarayıcıdaki bütün kayıtlar silinir."
+        title={isOnline ? 'Bu cihazın kayıtları silinsin mi?' : 'Bütün veriler silinsin mi?'}
+        body={
+          isOnline
+            ? 'Bu tarayıcı hangi odalarda kim olduğunu unutur. Sunucudaki odalar silinmez.'
+            : 'Odalar, üyeler ve bu tarayıcıdaki bütün kayıtlar silinir.'
+        }
         confirmLabel="Sil"
         cancelLabel="Vazgeç"
         onConfirm={() => void resetAll()}

@@ -1,0 +1,13 @@
+# Netlify yayın ayarları
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Tek sayfalık uygulama: /r/... gibi her adres index.html'e gitsin (yenileyince 404 olmasın)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

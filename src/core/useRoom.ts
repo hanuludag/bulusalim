@@ -8,7 +8,7 @@ export interface RoomSource<T> {
   subscribe(roomId: string, onChange: () => void): () => void;
 }
 
-export type RoomStatus = 'loading' | 'ready' | 'not-found';
+export type RoomStatus = 'loading' | 'ready' | 'not-found' | 'error';
 
 export function useRoom<T>(source: RoomSource<T>, roomId: string | undefined) {
   const [status, setStatus] = useState<RoomStatus>('loading');
@@ -27,8 +27,9 @@ export function useRoom<T>(source: RoomSource<T>, roomId: string | undefined) {
       setData(snap);
       setStatus(snap ? 'ready' : 'not-found');
     } catch (e) {
+      // Ağ hatası: veriyi silme, eldeki veri varsa göstermeye devam et
       console.error('[useRoom] Oda okunamadı', e);
-      if (id === reqId.current) setStatus('not-found');
+      if (id === reqId.current) setStatus((s) => (s === 'ready' ? s : 'error'));
     }
   }, [source, roomId]);
 

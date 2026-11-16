@@ -14,7 +14,7 @@ import { shareToWhatsApp } from '../../core/share';
 import { TabBar } from '../../core/components/TabBar';
 import { Stepper } from '../../core/components/Stepper';
 import { CalendarIcon, FlagIcon, ListIcon, ShareIcon } from '../../core/components/Icons';
-import { Loading, RoomNotFound } from '../components/Status';
+import { Loading, Offline, RoomNotFound } from '../components/Status';
 import IdeasTab from './IdeasTab';
 import TimeTab from './TimeTab';
 import ResultTab from './ResultTab';
@@ -99,6 +99,7 @@ export default function Room() {
   );
 
   if (status === 'loading') return <Loading />;
+  if (status === 'error') return <Offline onRetry={() => void refresh()} />;
   if (status === 'not-found' || !view || !roomId) return <RoomNotFound />;
   if (!tab) return <Navigate to={`/r/${roomId}`} replace />;
   if (!me || !devState) return <Navigate to={`/r/${roomId}`} replace />;

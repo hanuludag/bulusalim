@@ -7,12 +7,12 @@ import { firstShareText, roomLink } from '../share';
 import { useRoom } from '../../core/useRoom';
 import { copyText, shareToWhatsApp } from '../../core/share';
 import { ShareIcon } from '../../core/components/Icons';
-import { Loading, RoomNotFound } from '../components/Status';
+import { Loading, Offline, RoomNotFound } from '../components/Status';
 import './RoomReady.css';
 
 export default function RoomReady() {
   const { roomId } = useParams();
-  const { status, data } = useRoom(store, roomId);
+  const { status, data, refresh } = useRoom(store, roomId);
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
@@ -20,6 +20,7 @@ export default function RoomReady() {
   }, []);
 
   if (status === 'loading') return <Loading />;
+  if (status === 'error') return <Offline onRetry={() => void refresh()} />;
   if (status === 'not-found' || !data) return <RoomNotFound />;
 
   const link = roomLink(data.room.id);

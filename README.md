@@ -1,8 +1,16 @@
-# buluşalım · çevrimdışı test sürümü (v0.1)
+# buluşalım · v0.2 (çevrimiçi)
 
 Arkadaş grubu **ne yapacağına, nerede yapacağına ve ne zaman buluşacağına** bu uygulamayla karar verir.
 Oda kur → linki paylaş → isimle katıl → fikirleri 1–5 puanla → boş saatini seç → sonuç.
-Bu sürümde sunucu yok: bütün veriler **tarayıcının hafızasında (localStorage)** durur.
+
+İki modda çalışır:
+
+| Mod | Ne zaman | Veri nerede |
+|---|---|---|
+| **Çevrimiçi** (varsayılan) | `.env` içinde Supabase ayarları varsa | Supabase veritabanı. Linki arkadaşına atınca onda da çalışır, değişiklikler ~1 sn'de herkese gider. |
+| **Çevrimdışı** | `.env` içinde `VITE_OFFLINE=1` varsa | Tarayıcının hafızası (localStorage). İnternetsiz deneme için. |
+
+Hangi modun kullanılacağına `src/app/runtime.ts` karar verir. Ekran kodu iki modda da aynıdır.
 
 ---
 
@@ -18,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Tarayıcıda **http://localhost:5173** adresini aç. İlk `npm install` dışında internet gerekmez, fontlar da projenin içinde.
+Tarayıcıda **http://localhost:5173** adresini aç. Fontlar projenin içinde. Çevrimiçi modda Supabase için internet gerekir.
 
 ### Telefonda denemek (aynı Wi-Fi)
 
@@ -59,10 +67,12 @@ Sağ üstteki küçük, kesik çizgili **test** düğmesi geliştirici panelini 
 | **Demo oda (eksik)** | 6 kişi, 5 fikir, 4 kişi cevap vermiş. Sen Emirhan olursun. |
 | **Demo oda (kesin)** | Aynısı ama 6 kişinin hepsi cevap vermiş. Getirilecekler hazır. |
 | **Rehber ve ipuçlarını sıfırla** | Bu sekmenin adım göstergesi, ipuçları ve "kesin sonuç" animasyonu baştan gelir. |
-| **Yapay gecikme** | Her işleme 0–300 ms gecikme ekler ("Yükleniyor…" ve iyimser güncellemeyi görmek için). Sayfa yenilenince kapanır. |
-| **Her şeyi sil** | Onay ister. Bütün odaları ve `bs:` ile başlayan bütün kayıtları siler. |
+| **Yapay gecikme** | Sadece çevrimdışı modda. Her işleme 0–300 ms gecikme ekler. |
+| **Her şeyi sil** | Onay ister. Çevrimdışı modda bütün odaları siler. Çevrimiçi modda sadece bu tarayıcının `bs:` kayıtlarını siler (sunucudaki odalar kalır). |
 
-Altta kullanılan localStorage boyutu (KB) yazar.
+Çevrimdışı modda altta kullanılan localStorage boyutu (KB) yazar. Panelin başlığı hangi modda olduğunu gösterir.
+
+**Çevrimiçi modda** çok kişiyi denemenin en kolay yolu: odayı bilgisayarda kur, linki telefonda aç (ya da başka bir tarayıcıda / gizli pencerede).
 
 ### Çok kişiyi tek bilgisayarda denemek
 
@@ -94,10 +104,17 @@ Puanlar (fikir → kişi):
 
 ---
 
+## Yayınlama (Netlify)
+
+`netlify.toml` hazır: Netlify'da GitHub deposunu seç, başka ayar gerekmez. Supabase adresi ve anahtarı `.env` dosyasından gelir.
+`.env` içindeki anahtar "publishable" türündedir; tarayıcıya zaten gönderilir, gizli değildir.
+
 ## Bilinen sınırlar
 
-- **Veri sadece bu tarayıcıda.** Telefon ile bilgisayarın verileri ayrıdır. Başka tarayıcı ya da gizli sekme odayı göremez.
-- **WhatsApp linki arkadaşında çalışmaz.** Gönderilen oda linki arkadaşının telefonunda "Oda bulunamadı" der, çünkü veri senin tarayıcında. Paylaş butonları yine de çalışır (WhatsApp için internet gerekir).
+- **Hesap yok, link anahtardır.** Oda linkini bilen herkes odayı görür ve katılabilir (tasarımdaki "Linki olan herkes odayı ve seçimleri görür." notu).
+- **"Bu cihaz kim?" bilgisi cihazda.** Tarayıcı verisini silersen ya da başka telefondan girersen aynı ismi yazıp "Evet, benim" demen gerekir.
+- **Ücretsiz Supabase projesi** 7 gün hiç kullanılmazsa duraklar; Supabase panelinden tek tıkla yeniden açılır.
+- **Çevrimdışı modda** veri sadece o tarayıcıdadır ve link başka cihazda çalışmaz.
 - **Getirilecekler şablonları tahmindir.** `src/app/suggestions.ts` içinden değiştirebilirsin.
 - **Madde silme yok.**
 - **Fikir silinince getirilecekler değişmez.** Maddeler kesin sonuç ilk çıktığında bir kez eklenir. Sonradan kazanan değişse de liste kalır.
@@ -123,16 +140,17 @@ src/
   Oyun Odası aynı kodu `createSync('oyunodasi')`, `createDevice('oo')` ile kullanabilir; anahtarlar karışmaz.
 - **Ekrandaki bütün metinler** `src/app/copy.ts` içindedir (test paneli hariç). Dilim adları (Sabah/Öğle/Akşam) §17 gereği `src/app/slots.ts` içinde.
 
-## Çevrimiçi sürüme geçerken ne değişecek?
+## Çevrimdışı → çevrimiçi: ne değişti?
 
-Ekranlar veriye sadece `DataStore` sözleşmesi (`src/app/store.ts`) üzerinden ulaşır. Bu yüzden:
+Ekranlar veriye sadece `DataStore` sözleşmesi (`src/app/store.ts`) üzerinden ulaşır. Geçişte **hiçbir ekran dosyası değişmedi**:
 
-| Bugün (çevrimdışı) | Yarın (çevrimiçi) |
+| Çevrimdışı | Çevrimiçi |
 |---|---|
-| `src/app/localStore.ts` (localStorage) | `src/app/supabaseStore.ts` (aynı `DataStore` arayüzü) |
-| `src/core/sync.ts` (BroadcastChannel, sekmeler arası) | Supabase Realtime ile canlı güncelleme (`subscribe` içinde) |
-| `src/app/runtime.ts` içinde `createLocalStore()` | `createSupabaseStore()`; **ekran kodu değişmez** |
-| Test paneli kimlik taklidi | Gerçek cihazlar / hesapsız kimlik |
+| `src/app/localStore.ts` (localStorage) | `src/app/supabaseStore.ts` (veritabanındaki `bs_*` fonksiyonları) |
+| `src/core/sync.ts` (BroadcastChannel, sekmeler arası) | Supabase Realtime broadcast kanalı `room:{id}` (cihazlar arası) |
+| `src/app/runtime.ts` → `createLocalStore()` | `src/app/runtime.ts` → `createSupabaseStore()` |
+
+Veritabanı ayrıntıları: `supabase/README.md`.
 
 ---
 

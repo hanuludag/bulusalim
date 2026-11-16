@@ -2,6 +2,7 @@
 // böylece sonucu elle hesaplayıp kontrol edebilirsin. Beklenen sonuçlar demo.test.ts'te.
 import type { Attendance, Availability, Idea, Item, Member, Rating, Room, RoomSnapshot, Score, Slot } from './types';
 import { addDays } from '../core/format';
+import type { DataStore } from './store';
 
 export type DemoKind = 'eksik' | 'kesin';
 
@@ -110,4 +111,39 @@ export function buildDemo(kind: DemoKind, startDate: string, newId: () => string
   }
 
   return { room, members, ideas, ratings, availability, attendance, items };
+}
+
+/**
+ * Demo odayı herhangi bir DataStore'a (çevrimdışı ya da çevrimiçi) sözleşme fonksiyonlarıyla yazar.
+ * Döndürür: oda id'si ve "sen" olacağın Emirhan'ın üye id'si.
+ */
+export async function seedDemo(store: DataStore, kind: DemoKind, startDate: string): Promise<{ roomId: string; meId: string }> {
+  const plan = buildDemo(kind, startDate, () => crypto.randomUUID());
+  const nameOf = (id: string) => plan.members.find((m) => m.id === id)!.name;
+  const { room, creator } = await store.createRoom({ name: plan.room.name, startDate, creatorName: 'Emirhan' });
+  const ids = new Map<string, string>([['Emirhan', creator.id]]);
+  for (const m of plan.members.slice(1)) ids.set(m.name, (await store.joinRoom(room.id, m.name)).id);
+  const realId = (planMemberId: string) => ids.get(nameOf(planMemberId))!;
+
+  const ideaIds = new Map<string, string>();
+  for (const i of plan.ideas) {
+    const idea = await store.addIdea(room.id, {
+      name: i.name, place: i.place, mapUrl: i.mapUrl, note: i.note,
+      suggestionId: i.suggestionId ?? undefined, addedBy: realId(i.addedBy),
+    });
+    ideaIds.set(i.id, idea.id);
+  }
+  await Promise.all(plan.ratings.map((r) =>
+    store.setRating({ roomId: room.id, memberId: realId(r.memberId), ideaId: ideaIds.get(r.ideaId)!, score: r.score })));
+  await Promise.all(plan.availability.map((a) =>
+    store.toggleAvailability({ roomId: room.id, memberId: realId(a.memberId), day: a.day, slot: a.slot })));
+  await Promise.all(plan.attendance.map((a) =>
+    store.setAttendance({ roomId: room.id, memberId: realId(a.memberId), status: a.status })));
+  if (kind === 'kesin') {
+    await store.seedItemsIfNeeded(room.id, 'balik');
+    const snap = await store.getRoom(room.id);
+    const olta = snap?.items.find((i) => i.name === 'Olta');
+    if (olta) await store.claimItem(olta.id, ids.get('Kaan')!);
+  }
+  return { roomId: room.id, meId: creator.id };
 }
