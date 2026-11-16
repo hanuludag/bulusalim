@@ -9,6 +9,8 @@ export interface Room {
   days?: string[] /* buluşulabilecek günler, sıralı; boş/yoksa startDate'ten 7 gün (eski odalar) */;
   /** Gün oylaması: açıkken herkes günü olmayan fikirler için gün+dilim oyu verir (kurucu açar/kapatır) */
   dayVoting?: boolean;
+  /** Günlere dağıtma: açıkken kurucunun her fikre verdiği zaman (assignedDay/Slot) plana uygulanır */
+  distribution?: boolean;
   createdBy: ID; createdAt: number;
 }
 export interface Member { id: ID; roomId: ID; name: string; createdAt: number }
@@ -17,6 +19,8 @@ export interface Idea {
   addedBy: ID; suggestionId: string | null; createdAt: number;
   /** Fikrin günü ve dilimi (ikisi birlikte). null = herhangi bir gün (eski fikirler). */
   day?: string | null; slot?: Slot | null;
+  /** Kurucunun dağıtımı (fikrin kendi gününden ayrı; dağıtma kapalıyken uygulanmaz ama silinmez) */
+  assignedDay?: string | null; assignedSlot?: Slot | null;
 }
 /** Bir üyenin bir fikre cevabı. Kayıt yoksa: cevap yok. */
 export interface Vote { roomId: ID; memberId: ID; ideaId: ID; value: VoteValue }

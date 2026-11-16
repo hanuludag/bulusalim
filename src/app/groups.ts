@@ -19,3 +19,7 @@ export function groupIdeas(snap: RoomSnapshot): IdeaGroups {
     })),
   };
 }
+
+/** Gün oyu verilebilir mi: gün oylaması açık, fikrin kendi günü yok ve kurucu (dağıtma açıkken) dağıtmamış */
+export const canDayVote = (snap: RoomSnapshot, idea: Idea) =>
+  !!snap.room.dayVoting && !idea.day && !(snap.room.distribution && idea.assignedDay);

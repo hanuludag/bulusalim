@@ -154,3 +154,35 @@ describe('gün oylaması', () => {
     expect(computeResult(s).ideas[0].dayVote).toEqual({ day: '2026-11-16', slot: 'aksam', count: 1 });
   });
 });
+
+describe('kurucunun dağıtımı', () => {
+  it('dağıtma açıkken uygulanır, gün oyunu ezer; kapalıyken uygulanmaz ama kaybolmaz', () => {
+    const s = makeSnap(['A', 'B']);
+    s.room.dayVoting = true;
+    const x = addIdea(s, 'x', 1);
+    vote(s, 'm0', 'x', 'yes');
+    s.placements = [{ roomId: 'r', memberId: 'm1', ideaId: 'x', day: '2026-11-15', slot: 'aksam' }];
+    x.assignedDay = '2026-11-16';
+    x.assignedSlot = 'gunduz';
+    // kapalı → gün oyu geçerli
+    expect(computeResult(s).plan.map((o) => [o.day, o.slot])).toEqual([['2026-11-15', 'aksam']]);
+    expect(computeResult(s).ideas[0].source).toBe('vote');
+    // açık → kurucunun zamanı
+    s.room.distribution = true;
+    expect(computeResult(s).plan.map((o) => [o.day, o.slot])).toEqual([['2026-11-16', 'gunduz']]);
+    expect(computeResult(s).ideas[0].source).toBe('assigned');
+    // tekrar kapalı → gün oyu geri gelir
+    s.room.distribution = false;
+    expect(computeResult(s).plan.map((o) => [o.day, o.slot])).toEqual([['2026-11-15', 'aksam']]);
+  });
+
+  it('fikrin kendi günü her şeyden önce gelir', () => {
+    const s = makeSnap(['A']);
+    s.room.distribution = true;
+    const x = addIdea(s, 'x', 1);
+    x.day = '2026-11-14'; x.slot = 'aksam';
+    x.assignedDay = '2026-11-16'; x.assignedSlot = 'gunduz';
+    expect(computeResult(s).plan.map((o) => [o.day, o.slot])).toEqual([['2026-11-14', 'aksam']]);
+    expect(computeResult(s).ideas[0].source).toBe('own');
+  });
+});

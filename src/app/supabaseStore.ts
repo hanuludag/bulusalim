@@ -125,6 +125,20 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       changed(roomId);
     },
 
+    async setDistribution(roomId, memberId, on) {
+      await rpc('bs_set_distribution', { p_room: roomId, p_member: memberId, p_on: on });
+      changed(roomId);
+    },
+
+    async assignIdeas(roomId, memberId, items) {
+      await rpc('bs_assign_ideas', {
+        p_room: roomId,
+        p_member: memberId,
+        p_items: items.map((x) => ({ idea: x.ideaId, day: x.day, slot: x.day ? x.slot : null })),
+      });
+      changed(roomId);
+    },
+
     async renameRoom(roomId, memberId, name) {
       await rpc('bs_rename_room', { p_room: roomId, p_member: memberId, p_name: name });
       changed(roomId);

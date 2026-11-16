@@ -7,6 +7,7 @@ import { roomDays } from '../days';
 import { MAX_DAYS } from '../store';
 import type { Member, RoomSnapshot } from '../types';
 import { DayPicker } from './DayPicker';
+import { ToggleRow } from './Toggle';
 import { Sheet } from '../../core/components/Sheet';
 import { useToast } from '../../core/useToast';
 import './RoomMenu.css';
@@ -141,20 +142,22 @@ export function RoomMenu({ open, onClose, snap, me, refresh }: RoomMenuProps) {
         </section>
         {isCreator ? (
           <div className="rm-links">
-            <button
-              className="rm-row rm-toggle"
-              type="button"
-              role="switch"
-              aria-checked={!!snap.room.dayVoting}
+            <ToggleRow
+              on={!!snap.room.dayVoting}
+              onLabel={copy.dayVote.menuOn}
+              offLabel={copy.dayVote.menuOff}
+              sub={copy.dayVote.menuSub}
               disabled={busy}
-              onClick={() => void run(() => store.setDayVoting(roomId, me.id, !snap.room.dayVoting))}
-            >
-              <span>
-                {snap.room.dayVoting ? copy.dayVote.menuOn : copy.dayVote.menuOff}
-                <span className="sec s13 rm-sub">{copy.dayVote.menuSub}</span>
-              </span>
-              <span className={`rm-sw${snap.room.dayVoting ? ' on' : ''}`} aria-hidden="true" />
-            </button>
+              onToggle={() => void run(() => store.setDayVoting(roomId, me.id, !snap.room.dayVoting))}
+            />
+            <ToggleRow
+              on={!!snap.room.distribution}
+              onLabel={copy.distribution.menuOn}
+              offLabel={copy.distribution.menuOff}
+              sub={copy.distribution.menuSub}
+              disabled={busy}
+              onToggle={() => void run(() => store.setDistribution(roomId, me.id, !snap.room.distribution))}
+            />
             <button className="rm-row" type="button" onClick={() => go('rename')}>{copy.menu.rename}</button>
             <button className="rm-row" type="button" onClick={() => go('days')}>{copy.menu.editDays}</button>
             <button className="rm-row danger" type="button" onClick={() => go('delete')}>{copy.menu.deleteRoom}</button>

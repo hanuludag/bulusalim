@@ -12,7 +12,8 @@ import { useRoomScreen } from './useRoomScreen';
 import { SlotWho } from '../components/WhoList';
 import { PlanList } from '../components/PlanList';
 import { DistributeSheet } from '../components/DistributeSheet';
-import { distribute } from '../distribute';
+import { roomDays } from '../days';
+import type { Slot } from '../types';
 import { store } from '../runtime';
 import { copyText } from '../../core/share';
 import { useToast } from '../../core/useToast';
@@ -48,17 +49,18 @@ export default function ResultScreen() {
       </Link>
     </nav>
   );
-  const proposal = isCreator ? distribute(result) : [];
-  async function applyDistribution() {
+  const canDistribute = isCreator && !!snap.room.distribution;
+  async function saveDistribution(items: Array<{ ideaId: string; day: string | null; slot: Slot | null }>) {
     try {
-      for (const a of proposal) await store.moveIdea(a.idea.id, me.id, a.day, a.slot);
-      setDist(false);
+      await store.assignIdeas(snap.room.id, me.id, items);
       toast.show(copy.result.distributeDone, 2000);
+      await refresh();
+      return true;
     } catch (e) {
-      console.error('[bulusalim] Dağıtılamadı', e);
+      console.error('[bulusalim] Dağıtım kaydedilemedi', e);
       toast.show(copy.common.saveFailed, 2500);
+      return false;
     }
-    await refresh();
   }
   async function copyLink() {
     if (await copyText(link)) toast.show(copy.common.copied, 1500);
@@ -135,7 +137,7 @@ export default function ResultScreen() {
             {copy.result.copyLink}
           </button>
         </div>
-        {proposal.length > 0 && (
+        {canDistribute && (
           <button className="btn2" type="button" onClick={() => setDist(true)}>
             {copy.result.distribute}
           </button>
@@ -143,7 +145,7 @@ export default function ResultScreen() {
         <SlotWho snap={snap} slots={bestTimes} title={copy.result.timesTitle} />
         {nav}
       </section>
-      <DistributeSheet open={dist} items={proposal} onClose={() => setDist(false)} onApply={applyDistribution} />
+      <DistributeSheet open={dist} result={r} days={roomDays(snap.room)} onClose={() => setDist(false)} onSave={saveDistribution} />
       {ctx.menu}
     </main>
   );

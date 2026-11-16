@@ -24,6 +24,9 @@ export interface DataStore {
   /** Üyeyi ve cevaplarını siler; eklediği fikirler kalır. Kurucu kendini çıkaramaz. */
   removeMember(roomId: ID, memberId: ID, targetId: ID): Promise<void>;
   setDayVoting(roomId: ID, memberId: ID, on: boolean): Promise<void>;
+  setDistribution(roomId: ID, memberId: ID, on: boolean): Promise<void>;
+  /** Fikirlerin dağıtım zamanlarını kaydet (day null = dağıtımdan çıkar) */
+  assignIdeas(roomId: ID, memberId: ID, items: Array<{ ideaId: ID; day: string | null; slot: Slot | null }>): Promise<void>;
   /** Odayı herkes için tamamen siler. */
   deleteRoom(roomId: ID, memberId: ID): Promise<void>;
   /** value null = cevabı kaldır. */

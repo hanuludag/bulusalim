@@ -200,7 +200,6 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         if (day && !roomDays(room).includes(day)) throw new SaveError('day-not-in-room');
         idea.day = day;
         idea.slot = slot;
-        if (day) db.placements = db.placements.filter((p) => p.ideaId !== ideaId); // artık günü var
         return { ...idea };
       });
     },
@@ -223,6 +222,26 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
       });
     },
 
+    async setDistribution(roomId, memberId, on) {
+      await write(roomId, (db) => {
+        mustCreator(db, roomId, memberId).distribution = on;
+      });
+    },
+
+    async assignIdeas(roomId, memberId, items) {
+      await write(roomId, (db) => {
+        const room = mustCreator(db, roomId, memberId);
+        const days = roomDays(room);
+        items.forEach(({ ideaId, day, slot }) => {
+          if (day && (!slot || !days.includes(day))) throw new SaveError('bad-occasion');
+          const idea = db.ideas.find((i) => i.id === ideaId && i.roomId === roomId);
+          if (!idea) return;
+          idea.assignedDay = day;
+          idea.assignedSlot = day ? slot : null;
+        });
+      });
+    },
+
     async renameRoom(roomId, memberId, name) {
       if (!name.trim()) throw new SaveError('empty-name');
       await write(roomId, (db) => {
@@ -239,6 +258,10 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         db.availability = db.availability.filter((a) => a.roomId !== roomId || list.includes(a.day));
         db.placements = db.placements.filter((p) => p.roomId !== roomId || list.includes(p.day));
         db.ideas.forEach((i) => {
+          if (i.roomId === roomId && i.assignedDay && !list.includes(i.assignedDay)) {
+            i.assignedDay = null;
+            i.assignedSlot = null;
+          }
           if (i.roomId === roomId && i.day && !list.includes(i.day)) {
             i.day = null; // çıkarılan günün fikirleri "herhangi bir gün"e düşer
             i.slot = null;

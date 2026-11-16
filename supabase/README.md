@@ -19,3 +19,4 @@ oda linkindeki tahmin edilemez UUID odaya erişim anahtarıdır (Google Docs'tak
   `bs_set_days` çıkarılan günlerin fikirlerini "herhangi bir gün"e taşır.
 - `bulusalim_move_idea`: `bs_move_idea(p_idea, p_member, p_day, p_slot)` fikrin zamanını değiştirir (ekleyen ya da kurucu).
 - `bulusalim_day_voting`: `rooms.day_voting`, `placements` tablosu (üye × fikir → gün+dilim); `bs_set_day_voting` (kurucu), `bs_set_placement` (üye; kapalıyken ya da günü olan fikirde reddeder); `bs_get_room` artık `placements` da döndürür.
+- `bulusalim_distribution`: `rooms.distribution`, `ideas.assigned_day/assigned_slot` (kurucunun dağıtımı, kendi günden ayrı); `bs_set_distribution`, `bs_assign_ideas(p_room, p_member, p_items jsonb)` (kurucu); `bs_move_idea` artık gün oylarını silmez.

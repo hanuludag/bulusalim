@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { copy } from '../copy';
 import { store } from '../runtime';
 import { computeResult } from '../result';
-import { groupIdeas } from '../groups';
+import { canDayVote, groupIdeas } from '../groups';
 import { roomDays } from '../days';
 import { slotHours, slotLabel } from '../slots';
 import type { Idea } from '../types';
@@ -17,7 +17,7 @@ import { GuestBar } from '../components/GuestBar';
 import { IdeaSheet, type IdeaDraft, type OccasionPick } from '../components/IdeaSheet';
 import { TimeGrid } from '../components/TimeGrid';
 import { answers } from './answers';
-import { VoteLine } from '../components/VoteLine';
+import { AssignedLine, VoteLine } from '../components/VoteLine';
 import { DayVote } from '../components/DayVote';
 import { useRoomScreen } from './useRoomScreen';
 import './guest.css';
@@ -65,7 +65,8 @@ export default function GuestScreen() {
           {idea.place && <p className="sec s13">{idea.place}</p>}
           {idea.note && <p className="sec s13">{idea.note}</p>}
           <VoteLine yes={voters(idea.id, 'yes')} no={voters(idea.id, 'no')} />
-          {snap.room.dayVoting && !idea.day && (
+          <AssignedLine idea={idea} active={!!snap.room.distribution} />
+          {canDayVote(snap, idea) && (
             <DayVote idea={idea} days={days} mine={myPlacement(idea.id)} top={dayVotes.get(idea.id)} onPick={(o) => placeVote(idea, o)} />
           )}
         </div>

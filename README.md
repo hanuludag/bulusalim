@@ -36,9 +36,12 @@ en çok onaylanan o zamanın etkinliği olur (en az 1 onay). Bir odada her güne
 "Hangi gün olsun?" ile gün+dilim oyu verir. En çok oyu alan zaman o fikrin zamanı olur (eşitlikte daha çok kişinin boş olduğu,
 sonra erken gün); o zamanda birden fazla fikir varsa onaylarla kazanan seçilir. Kapalıyken gün oyları sayılmaz (silinmez).
 
-**Buluşmaları günlere dağıt (kurucu, isteğe bağlı):** Sonuç ekranında, günü olmayan ve onay alan fikirler varsa çıkar.
-Önce öneri gösterilir (en çok onaylanan → en çok kişinin boş olduğu, henüz etkinliği olmayan zaman), "Dağıt" ile kaydedilir
-(`src/app/distribute.ts`). Sonra fikir ⋯ menüsünden "Zamanını değiştir" ile tek tek oynanabilir.
+**Günlere dağıtma (kurucu ⋯ menüsünden açar/kapatır):** Açıkken Sonuç ekranında "Günlere dağıt" çıkar: günü belli olmayan
+her fikre tek tek gün+dilim seçilir, "Boş olanları otomatik doldur" kalanları en çok kişinin boş olduğu zamanlara yerleştirir
+(`src/app/distribute.ts`), "Kaydet" ile saklanır. Dağıtım fikrin kendi gününden ayrı tutulur (`assignedDay/Slot`):
+kapatınca plan gün oylamasına/eski haline döner, açınca dağıtım geri gelir. Dağıtılan fikirde gün oyu gizlenir.
+
+**Plandaki zamanın önceliği:** fikrin kendi günü (eklerken seçilen) → kurucunun dağıtımı (açıksa) → gün oylaması (açıksa) → "herhangi bir gün".
 
 **Paylaşım her zaman açık:** Sonuç'ta "Gruba hatırlat" yanında "Şimdiki sonucu paylaş" ve "Linki kopyala"; arkadaşın Plan sayfasında "Planı paylaş" ve "Linki kopyala".
 

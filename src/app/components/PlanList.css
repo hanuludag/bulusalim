@@ -25,3 +25,30 @@
   font-weight: 400;
   font-size: var(--fs-md);
 }
+
+.dist {
+  display: flex;
+  flex-direction: column;
+  max-height: 46dvh;
+  overflow-y: auto;
+  border-top: 1px solid var(--c-line);
+}
+.dist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--c-line);
+}
+.dist-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dist-when {
+  flex: 0 0 auto;
+}
+.dist-when.on {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}

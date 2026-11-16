@@ -12,9 +12,10 @@ import { Dock } from '../../core/components/Dock';
 import { useToast } from '../../core/useToast';
 import { IdeaRow } from '../components/IdeaRow';
 import { IdeaSheet, type IdeaDraft, type OccasionPick } from '../components/IdeaSheet';
-import { groupIdeas } from '../groups';
+import { canDayVote, groupIdeas } from '../groups';
 import { MoveSheet } from '../components/MoveSheet';
 import { DayVote } from '../components/DayVote';
+import { AssignedLine } from '../components/VoteLine';
 import { computeResult } from '../result';
 import { answers } from './answers';
 import { roomDays } from '../days';
@@ -111,9 +112,12 @@ export default function IdeasScreen() {
       onDelete={() => setToDelete(idea)}
       onMove={() => setToMove(idea)}
       extra={
-        snap.room.dayVoting && !idea.day ? (
-          <DayVote idea={idea} days={days} mine={a.myPlacement(idea.id)} top={dayVotes.get(idea.id)} onPick={(o) => a.placeVote(idea, o)} />
-        ) : null
+        <>
+          <AssignedLine idea={idea} active={!!snap.room.distribution} />
+          {canDayVote(snap, idea) && (
+            <DayVote idea={idea} days={days} mine={a.myPlacement(idea.id)} top={dayVotes.get(idea.id)} onPick={(o) => a.placeVote(idea, o)} />
+          )}
+        </>
       }
     />
   );
