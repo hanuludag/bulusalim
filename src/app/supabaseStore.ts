@@ -109,6 +109,12 @@ export function createSupabaseStore(url: string, key: string): DataStore {
       changed(roomId);
     },
 
+    async moveIdea(ideaId, memberId, day, slot) {
+      const idea = await rpc<Idea>('bs_move_idea', { p_idea: ideaId, p_member: memberId, p_day: day, p_slot: day ? slot : null });
+      changed(idea.roomId);
+      return idea;
+    },
+
     async renameRoom(roomId, memberId, name) {
       await rpc('bs_rename_room', { p_room: roomId, p_member: memberId, p_name: name });
       changed(roomId);

@@ -17,3 +17,4 @@ oda linkindeki tahmin edilemez UUID odaya erişim anahtarıdır (Google Docs'tak
   `bs_update_idea(p_idea, p_member, ...)` sadece ekleyen, `bs_delete_idea(p_idea, p_member)` ekleyen ya da kurucu.
 - `bulusalim_idea_days`: `ideas.day` + `ideas.slot` (ikisi birlikte ya da ikisi de boş); `bs_add_idea(..., p_day, p_slot)` günün odada olduğunu kontrol eder;
   `bs_set_days` çıkarılan günlerin fikirlerini "herhangi bir gün"e taşır.
+- `bulusalim_move_idea`: `bs_move_idea(p_idea, p_member, p_day, p_slot)` fikrin zamanını değiştirir (ekleyen ya da kurucu).

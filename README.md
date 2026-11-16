@@ -32,6 +32,12 @@ Testler: `npm test` · Yayın paketi: `npm run build` (çıktı `dist/`, Netlify
 **Gün gün plan:** Fikir eklerken gün + gündüz/akşam seçilir (ya da "Herhangi bir gün"). Her gün+dilim kendi oylamasını yapar:
 en çok onaylanan o zamanın etkinliği olur (en az 1 onay). Bir odada her güne ayrı etkinlik konabilir.
 
+**Buluşmaları günlere dağıt (kurucu, isteğe bağlı):** Sonuç ekranında, günü olmayan ve onay alan fikirler varsa çıkar.
+Önce öneri gösterilir (en çok onaylanan → en çok kişinin boş olduğu, henüz etkinliği olmayan zaman), "Dağıt" ile kaydedilir
+(`src/app/distribute.ts`). Sonra fikir ⋯ menüsünden "Zamanını değiştir" ile tek tek oynanabilir.
+
+**Paylaşım her zaman açık:** Sonuç'ta "Gruba hatırlat" yanında "Şimdiki sonucu paylaş" ve "Linki kopyala"; arkadaşın Plan sayfasında "Planı paylaş" ve "Linki kopyala".
+
 **İki görünüm:**
 - **Odayı kuran:** ayrıntılı ekranlar (Fikirler gün gün gruplu · Zaman · Sonuç), sayılar, "Kim?" listeleri, ⋯ oda menüsü.
 - **Linkten giren arkadaş:** tek sayfa `/r/:id/cevap` → 1. fikirlere ✓/✗, 2. boş saatlere dokun, Bitti → `/r/:id/plan`

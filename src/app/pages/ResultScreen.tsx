@@ -1,5 +1,5 @@
 // Sonuç ekranı: kazanan + durum + tek buton; altında bütün fikirler ve en uygun zamanlar (dokununca kim).
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { copy } from '../copy';
 import { computeResult } from '../result';
@@ -11,13 +11,20 @@ import { TopBar } from '../../core/components/TopBar';
 import { useRoomScreen } from './useRoomScreen';
 import { IdeaWho, SlotWho } from '../components/WhoList';
 import { PlanList } from '../components/PlanList';
+import { DistributeSheet } from '../components/DistributeSheet';
+import { distribute } from '../distribute';
+import { store } from '../runtime';
+import { copyText } from '../../core/share';
+import { useToast } from '../../core/useToast';
 import './screens.css';
 
 export default function ResultScreen() {
   const { gate, ctx } = useRoomScreen();
   const result = useMemo(() => (ctx ? computeResult(ctx.snap) : null), [ctx]);
+  const toast = useToast();
+  const [dist, setDist] = useState(false);
   if (!ctx || !result) return gate;
-  const { snap, link, shareFirst } = ctx;
+  const { snap, link, shareFirst, me, refresh, isCreator } = ctx;
   const base = `/r/${snap.room.id}`;
   const r = result;
 
@@ -41,6 +48,21 @@ export default function ResultScreen() {
       </Link>
     </nav>
   );
+  const proposal = isCreator ? distribute(result) : [];
+  async function applyDistribution() {
+    try {
+      for (const a of proposal) await store.moveIdea(a.idea.id, me.id, a.day, a.slot);
+      setDist(false);
+      toast.show(copy.result.distributeDone, 2000);
+    } catch (e) {
+      console.error('[bulusalim] Dağıtılamadı', e);
+      toast.show(copy.common.saveFailed, 2500);
+    }
+    await refresh();
+  }
+  async function copyLink() {
+    if (await copyText(link)) toast.show(copy.common.copied, 1500);
+  }
   const bestTimes = [...r.slots].filter((s) => s.freeCount > 0).sort((a, b) => b.freeCount - a.freeCount).slice(0, 5);
 
   if (r.voters.length === 0) {
@@ -103,10 +125,26 @@ export default function ResultScreen() {
         >
           {r.isFinal ? copy.result.share : copy.result.remind}
         </button>
+        <div className="res-actions">
+          {!r.isFinal && (
+            <button className="btn2 sm" type="button" onClick={() => void shareToWhatsApp(resultText(snap, r, link))}>
+              {copy.result.shareAnyway}
+            </button>
+          )}
+          <button className="btn2 sm" type="button" onClick={() => void copyLink()}>
+            {copy.result.copyLink}
+          </button>
+        </div>
+        {proposal.length > 0 && (
+          <button className="btn2" type="button" onClick={() => setDist(true)}>
+            {copy.result.distribute}
+          </button>
+        )}
         {r.ideas.length > 0 && <IdeaWho snap={snap} ideas={r.ideas} title={copy.result.ideasTitle} />}
         <SlotWho snap={snap} slots={bestTimes} title={copy.result.timesTitle} />
         {nav}
       </section>
+      <DistributeSheet open={dist} items={proposal} onClose={() => setDist(false)} onApply={applyDistribution} />
       {ctx.menu}
     </main>
   );

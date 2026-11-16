@@ -13,6 +13,8 @@ export interface DataStore {
   updateIdea(ideaId: ID, memberId: ID, patch: { name?: string; place?: string; note?: string }): Promise<Idea>;
   /** Ekleyen ya da oda kurucusu silebilir. O fikrin cevaplarını da siler. */
   deleteIdea(ideaId: ID, memberId: ID): Promise<void>;
+  /** Fikrin zamanını değiştir (day+slot ya da ikisi null = herhangi bir gün). Ekleyen ya da kurucu. */
+  moveIdea(ideaId: ID, memberId: ID, day: string | null, slot: Slot | null): Promise<Idea>;
   // --- Sadece oda kurucusu (memberId = room.createdBy) ---
   renameRoom(roomId: ID, memberId: ID, name: string): Promise<void>;
   /** 1–14 gün. Çıkarılan günlerdeki saat seçimleri silinir. */

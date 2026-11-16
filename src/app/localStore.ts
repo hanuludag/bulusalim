@@ -188,6 +188,20 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
       });
     },
 
+    async moveIdea(ideaId, memberId, day, slot) {
+      if (!!day !== !!slot) throw new SaveError('bad-occasion');
+      const roomId = load().ideas.find((i) => i.id === ideaId)?.roomId ?? null;
+      return write(roomId, (db) => {
+        const idea = db.ideas.find((i) => i.id === ideaId);
+        const room = idea && db.rooms.find((r) => r.id === idea.roomId);
+        if (!idea || !room || (idea.addedBy !== memberId && room.createdBy !== memberId)) throw new SaveError('not-allowed');
+        if (day && !roomDays(room).includes(day)) throw new SaveError('day-not-in-room');
+        idea.day = day;
+        idea.slot = slot;
+        return { ...idea };
+      });
+    },
+
     async renameRoom(roomId, memberId, name) {
       if (!name.trim()) throw new SaveError('empty-name');
       await write(roomId, (db) => {

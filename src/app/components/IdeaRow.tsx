@@ -17,9 +17,11 @@ export interface IdeaRowProps {
   onVote: (v: VoteValue) => void;
   onEdit: () => void;
   onDelete: () => void;
+  /** Verilirse ⋯ menüsünde "Zamanını değiştir" */
+  onMove?: () => void;
 }
 
-export function IdeaRow({ idea, myVote, yesNames, noNames, addedBy, canEdit, canDelete, onVote, onEdit, onDelete }: IdeaRowProps) {
+export function IdeaRow({ idea, myVote, yesNames, noNames, addedBy, canEdit, canDelete, onVote, onEdit, onDelete, onMove }: IdeaRowProps) {
   const [menu, setMenu] = useState(false);
   const [who, setWho] = useState(false);
   const yes = yesNames.length;
@@ -80,6 +82,11 @@ export function IdeaRow({ idea, myVote, yesNames, noNames, addedBy, canEdit, can
             {canEdit && (
               <button role="menuitem" type="button" onClick={pick(onEdit)}>
                 {copy.ideas.edit}
+              </button>
+            )}
+            {canDelete && onMove && (
+              <button role="menuitem" type="button" onClick={pick(onMove)}>
+                {copy.occasion.move}
               </button>
             )}
             {canDelete && (

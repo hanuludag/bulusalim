@@ -13,6 +13,7 @@ import { useToast } from '../../core/useToast';
 import { IdeaRow } from '../components/IdeaRow';
 import { IdeaSheet, type IdeaDraft, type OccasionPick } from '../components/IdeaSheet';
 import { groupIdeas } from '../groups';
+import { MoveSheet } from '../components/MoveSheet';
 import { roomDays } from '../days';
 import { slotHours, slotLabel } from '../slots';
 import { formatDate } from '../../core/format';
@@ -28,6 +29,7 @@ export default function IdeasScreen() {
   const toast = useToast();
   const [sheet, setSheet] = useState<SheetState>({ open: false });
   const [toDelete, setToDelete] = useState<Idea | null>(null);
+  const [toMove, setToMove] = useState<Idea | null>(null);
   if (!ctx) return gate;
   const { snap, me, mutate, refresh, shareFirst } = ctx;
   const base = `/r/${snap.room.id}`;
@@ -101,6 +103,7 @@ export default function IdeasScreen() {
       onVote={(v) => vote(idea, v)}
       onEdit={() => setSheet({ open: true, editing: idea })}
       onDelete={() => setToDelete(idea)}
+      onMove={() => setToMove(idea)}
     />
   );
   const showDock = hasMyVote(snap, me.id);
@@ -187,6 +190,15 @@ export default function IdeasScreen() {
         cancelLabel={copy.ideas.cancel}
         onConfirm={() => void confirmDelete()}
         onCancel={() => setToDelete(null)}
+      />
+      <MoveSheet
+        idea={toMove}
+        days={roomDays(snap.room)}
+        onClose={() => setToMove(null)}
+        onSave={async (o) => {
+          const idea = toMove;
+          if (idea && (await run(() => store.moveIdea(idea.id, me.id, o?.day ?? null, o?.slot ?? null)))) setToMove(null);
+        }}
       />
       {ctx.menu}
     </main>
