@@ -46,7 +46,7 @@ Demo oda (eksik) · Demo oda (kesin) · yapay gecikme (çevrimdışı) · kayıt
 | Bekleniyor | Kaan, Arda | — (Kesin sonuç ✓) |
 
 ## Bilinen sınırlar
-- Hesap yok: oda linkini bilen herkes odayı görür ve katılabilir.
+- Hesap yok: oda linkini (8 harfli kısa kod, ör. `/r/k7m2xq4p`) bilen herkes odayı görür ve katılabilir. Eski uzun linkler de çalışır.
 - "Bu cihaz kim" bilgisi tarayıcıda. Başka telefondan girersen aynı adı yazıp "Evet, benim" de.
 - Tek üyeli oda, o kişi cevap verince hemen "Kesin sonuç" olur.
 - Öneri listesi `src/app/suggestions.ts` içinden değiştirilebilir.

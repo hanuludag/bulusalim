@@ -66,7 +66,7 @@ export function createSupabaseStore(url: string, key: string): DataStore {
 
     async getRoom(roomId) {
       // Geçersiz biçimli id'yi sunucuya hiç gönderme
-      if (!/^[0-9a-f-]{36}$/i.test(roomId)) return null;
+      if (!/^[0-9a-z-]{6,36}$/i.test(roomId)) return null; // kısa kod (yeni) ya da uuid (eski odalar)
       return rpc<RoomSnapshot | null>('bs_get_room', { p_room: roomId });
     },
 

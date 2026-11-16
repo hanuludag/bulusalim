@@ -93,10 +93,10 @@ export const copy = {
   // WhatsApp mesajları (emoji yok, link hep sonda)
   share: {
     first: (room: string, link: string) =>
-      `${room}: ne yapıyoruz, nerede, ne zaman? Fikirleri onayla, boş zamanını seç. 1 dk sürüyor: ${link}`,
+      `*${room}*\nNe yapıyoruz, nerede, ne zaman? Fikirleri onayla, boş zamanını seç. 1 dk sürüyor.\n\n${link}`,
     remind: (room: string, voters: number, total: number, names: string, link: string) =>
-      `${room}: ${voters}/${total} cevap verdi. Bekleniyor: ${names}. 1 dk sürüyor: ${link}`,
+      `*${room}*\n${voters}/${total} kişi cevap verdi. Bekleniyor: ${names}. 1 dk sürüyor.\n\n${link}`,
     result: (room: string, parts: string[], link: string) =>
-      `${room} sonucu: ${parts.length ? `${parts.join(', ')}. ` : ''}Detay: ${link}`,
+      `*${room}* sonucu\n${parts.length ? `${parts.join('\n')}\n` : ''}\nDetay: ${link}`,
   },
 } as const;
