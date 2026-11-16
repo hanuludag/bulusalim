@@ -144,7 +144,7 @@ export const copy = {
     addedBy: (name: string) => `${name} ekledi`,
     cancel: 'Vazgeç',
   },
-  suggestions: { title: 'Öneriler', add: '+ ekle', added: 'eklendi ✓' },
+  suggestions: { title: 'Öneriler', add: '+ ekle', added: 'eklendi ✓', all: 'Hepsi', free: 'Ücretsiz', filter: 'Öneri türü' },
   ideaSheet: {
     titleAdd: 'Fikir ekle',
     titleEdit: 'Fikri düzenle',

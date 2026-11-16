@@ -7,6 +7,7 @@ ul.sug-strip {
   padding: 0 var(--gutter) var(--sp-1);
   overflow-x: auto;
   scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--gutter); /* tutunma kenar boşluğunu korusun */
   scrollbar-width: none;
 }
 .sheet ul.sug-strip {
@@ -53,4 +54,33 @@ ul.sug-strip {
 }
 .occ-row .btn2 {
   flex: 0 0 auto;
+}
+.sug-filter {
+  display: flex;
+  gap: 6px;
+  padding: 0 var(--gutter) var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.sheet .sug-filter {
+  margin: 0 calc(-1 * var(--gutter));
+}
+.sug-filter::-webkit-scrollbar {
+  display: none;
+}
+.sug-chip {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--c-line);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--c-ink-2);
+  font: 500 var(--fs-sm) var(--f-sans);
+  white-space: nowrap;
+}
+.sug-chip[aria-pressed='true'] {
+  background: var(--c-ink);
+  border-color: var(--c-ink);
+  color: var(--c-on-accent);
 }

@@ -75,7 +75,7 @@ Demo oda (eksik) · Demo oda (kesin) · yapay gecikme (çevrimdışı) · kayıt
 - Hesap yok: oda linkini (8 harfli kısa kod, ör. `/r/k7m2xq4p`) bilen herkes odayı görür ve katılabilir. Eski uzun linkler de çalışır.
 - "Bu cihaz kim" bilgisi tarayıcıda. Başka telefondan girersen aynı adı yazıp "Evet, benim" de.
 - Tek üyeli oda, o kişi cevap verince hemen "Kesin sonuç" olur.
-- Öneri listesi `src/app/suggestions.ts` içinden değiştirilebilir.
+- Öneri listesi (53 fikir, 6 kategori + "Ücretsiz" filtresi) `src/app/suggestions.ts` içinden değiştirilebilir. Var olan `id`leri değiştirme, yenisini ekle.
 - Ücretsiz Supabase projesi 7 gün kullanılmazsa duraklar (panelden tek tıkla açılır).
 - Çevrimdışı modda veri sadece o tarayıcıdadır; link başka cihazda çalışmaz.
 
