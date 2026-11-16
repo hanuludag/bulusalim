@@ -10,6 +10,7 @@ import { shareToWhatsApp } from '../../core/share';
 import { TopBar } from '../../core/components/TopBar';
 import { useRoomScreen } from './useRoomScreen';
 import { IdeaWho, SlotWho } from '../components/WhoList';
+import { PlanList } from '../components/PlanList';
 import './screens.css';
 
 export default function ResultScreen() {
@@ -67,7 +68,13 @@ export default function ResultScreen() {
     <main className="page">
       {bar}
       <section className="pad res">
-        <div className="win">
+        {r.plan.length > 0 && (
+          <div className="res-plan">
+            <h2 className="sec s13">{copy.result.planTitle}</h2>
+            <PlanList result={r} detail />
+          </div>
+        )}
+        {(r.general.length > 0 || r.plan.length === 0) && <div className="win">
           <h1 className="h1">{w ? (w.place ? `${w.name} · ${w.place}` : w.name) : copy.result.noIdea}</h1>
           {b ? (
             <p className="win-time mono">
@@ -76,7 +83,7 @@ export default function ResultScreen() {
           ) : (
             <p className="s17">{copy.result.noTime}</p>
           )}
-        </div>
+        </div>}
         <div className="res-status">
           {r.isFinal ? (
             <p className="b">{copy.result.final}</p>

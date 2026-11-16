@@ -85,6 +85,8 @@ export function createSupabaseStore(url: string, key: string): DataStore {
         p_note: input.note ?? '',
         p_suggestion_id: input.suggestionId ?? null,
         p_added_by: input.addedBy,
+        p_day: input.day ?? null,
+        p_slot: input.day ? (input.slot ?? null) : null,
       });
       changed(roomId);
       return idea;

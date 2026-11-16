@@ -29,6 +29,14 @@ Testler: `npm test` · Yayın paketi: `npm run build` (çıktı `dist/`, Netlify
 | Zaman | Oda günleri × Gündüz 10–17 / Akşam 17–21, altında "Kim ne zaman boş" | Sonucu gör → |
 | Sonuç | Kazanan + durum + bütün fikirler + en uygun 5 zaman (dokununca kim) + Odalarım / Yeni oda kur | Gruba hatırlat / Sonucu paylaş |
 
+**Gün gün plan:** Fikir eklerken gün + gündüz/akşam seçilir (ya da "Herhangi bir gün"). Her gün+dilim kendi oylamasını yapar:
+en çok onaylanan o zamanın etkinliği olur (en az 1 onay). Bir odada her güne ayrı etkinlik konabilir.
+
+**İki görünüm:**
+- **Odayı kuran:** ayrıntılı ekranlar (Fikirler gün gün gruplu · Zaman · Sonuç), sayılar, "Kim?" listeleri, ⋯ oda menüsü.
+- **Linkten giren arkadaş:** tek sayfa `/r/:id/cevap` → 1. fikirlere ✓/✗, 2. boş saatlere dokun, Bitti → `/r/:id/plan`
+  (sadece plan, isim ve sayı yok, "Cevaplarımı düzenle"). Odaya tekrar girince cevap verdiyse plana, vermediyse cevap sayfasına gider.
+
 **Kim ne dedi:** Fikirlerde "Kim?" → ✓ onaylayanlar, ✗ onaylamayanlar. Zaman ve Sonuç'ta satıra dokununca o saatte boş olanlar.
 
 **Oda menüsü (⋯):** herkes: Odalarım, Yeni oda kur, üye listesi. Sadece **odayı kuran**: oda adını değiştir, günleri değiştir

@@ -2,7 +2,7 @@
 export type ID = string; // crypto.randomUUID()
 export type Slot = 'gunduz' | 'aksam';
 export type VoteValue = 'yes' | 'no';
-export type ScreenKey = 'fikirler' | 'zaman' | 'sonuc';
+export type ScreenKey = 'fikirler' | 'zaman' | 'sonuc' | 'cevap' | 'plan';
 
 export interface Room {
   id: ID; name: string; startDate: string /* YYYY-MM-DD, ilk gün */;
@@ -13,6 +13,8 @@ export interface Member { id: ID; roomId: ID; name: string; createdAt: number }
 export interface Idea {
   id: ID; roomId: ID; name: string; place: string; note: string /* ≤140 */;
   addedBy: ID; suggestionId: string | null; createdAt: number;
+  /** Fikrin günü ve dilimi (ikisi birlikte). null = herhangi bir gün (eski fikirler). */
+  day?: string | null; slot?: Slot | null;
 }
 /** Bir üyenin bir fikre cevabı. Kayıt yoksa: cevap yok. */
 export interface Vote { roomId: ID; memberId: ID; ideaId: ID; value: VoteValue }

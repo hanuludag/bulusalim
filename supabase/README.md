@@ -15,3 +15,5 @@ oda linkindeki tahmin edilemez UUID odaya erişim anahtarıdır (Google Docs'tak
 - `bulusalim_days_admin`: `rooms.days date[]` (1–14 gün); `bs_create_room(..., p_days)`;
   kurucu fonksiyonları `bs_rename_room`, `bs_set_days`, `bs_remove_member`, `bs_delete_room` (hepsi `created_by` kontrolü yapar);
   `bs_update_idea(p_idea, p_member, ...)` sadece ekleyen, `bs_delete_idea(p_idea, p_member)` ekleyen ya da kurucu.
+- `bulusalim_idea_days`: `ideas.day` + `ideas.slot` (ikisi birlikte ya da ikisi de boş); `bs_add_idea(..., p_day, p_slot)` günün odada olduğunu kontrol eder;
+  `bs_set_days` çıkarılan günlerin fikirlerini "herhangi bir gün"e taşır.

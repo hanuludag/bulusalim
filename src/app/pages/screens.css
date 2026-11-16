@@ -67,3 +67,30 @@
   border-top: 1px solid var(--c-line);
   padding-top: var(--sp-3);
 }
+
+.grp-day {
+  font-family: var(--f-serif);
+  font-weight: 600;
+  font-size: var(--fs-lg);
+  padding-top: var(--sp-5);
+  padding-bottom: var(--sp-1);
+}
+.grp-slot {
+  padding-top: var(--sp-2);
+  border-bottom: 1px solid var(--c-line);
+  padding-bottom: var(--sp-1);
+}
+.grp-add {
+  padding-top: var(--sp-1);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--c-line);
+}
+.grp-add .tb {
+  margin-left: 0;
+}
+
+.res-plan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}

@@ -38,3 +38,19 @@ ul.sug-strip {
   display: flex;
   align-items: center;
 }
+
+.occ {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.occ-row {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.occ-row .btn2 {
+  flex: 0 0 auto;
+}

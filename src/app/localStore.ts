@@ -142,12 +142,16 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
     },
 
     async addIdea(roomId, input) {
+      const day = input.day ?? null;
+      const slot = day ? (input.slot ?? null) : null;
+      if (!!day !== !!slot) throw new SaveError('bad-occasion');
       return write(roomId, (db) => {
-        mustRoom(db, roomId);
+        const room = mustRoom(db, roomId);
+        if (day && !roomDays(room).includes(day)) throw new SaveError('day-not-in-room');
         const idea: Idea = {
           id: newId(), roomId, name: input.name.trim(), place: (input.place ?? '').trim(),
           note: (input.note ?? '').trim().slice(0, 140), addedBy: input.addedBy,
-          suggestionId: input.suggestionId ?? null, createdAt: now(),
+          suggestionId: input.suggestionId ?? null, createdAt: now(), day, slot,
         };
         db.ideas.push(idea);
         return idea;
@@ -198,6 +202,12 @@ export function createLocalStore(opts: LocalStoreOptions = {}): LocalStore {
         room.days = list;
         room.startDate = list[0];
         db.availability = db.availability.filter((a) => a.roomId !== roomId || list.includes(a.day));
+        db.ideas.forEach((i) => {
+          if (i.roomId === roomId && i.day && !list.includes(i.day)) {
+            i.day = null; // çıkarılan günün fikirleri "herhangi bir gün"e düşer
+            i.slot = null;
+          }
+        });
       });
     },
 

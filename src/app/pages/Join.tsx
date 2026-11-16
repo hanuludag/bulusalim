@@ -24,7 +24,7 @@ export default function Join({ snap }: { snap: RoomSnapshot }) {
     device.bindMember(room.id, m.id);
     device.setLastName(m.name);
     device.setLastRoom({ id: room.id, name: room.name });
-    navigate(`/r/${room.id}/${isNew ? 'fikirler' : landingScreen(snap, m.id)}`, { replace: true });
+    navigate(`/r/${room.id}/${isNew ? 'cevap' : landingScreen(snap, m.id)}`, { replace: true });
   }
 
   async function submit(e: FormEvent) {

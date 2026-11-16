@@ -83,3 +83,43 @@ describe('computeResult v2', () => {
     expect(computeResult(s).bestSlot).toBeNull();
   });
 });
+
+describe('gün gün plan', () => {
+  it('her gün+dilimin kendi kazananı; günsüz fikirler ayrı', () => {
+    const s = makeSnap(['A', 'B', 'C']);
+    const balik = addIdea(s, 'balik', 1);
+    balik.day = '2026-11-14'; balik.slot = 'gunduz';
+    const sinema = addIdea(s, 'sinema', 2);
+    sinema.day = '2026-11-14'; sinema.slot = 'gunduz';
+    const pizza = addIdea(s, 'pizza', 3);
+    pizza.day = '2026-11-15'; pizza.slot = 'aksam';
+    const bos = addIdea(s, 'bos', 4);
+    bos.day = '2026-11-16'; bos.slot = 'aksam';
+    addIdea(s, 'genel', 5);
+    vote(s, 'm0', 'balik', 'yes');
+    vote(s, 'm1', 'sinema', 'yes');
+    vote(s, 'm2', 'sinema', 'yes');
+    vote(s, 'm0', 'pizza', 'yes');
+    vote(s, 'm1', 'bos', 'no');
+    free(s, 'm0', '2026-11-14', 'gunduz');
+    const r = computeResult(s);
+    expect(r.plan.map((o) => [o.day, o.slot, o.winner?.id ?? null])).toEqual([
+      ['2026-11-14', 'gunduz', 'sinema'],
+      ['2026-11-15', 'aksam', 'pizza'],
+      ['2026-11-16', 'aksam', null], // onay yok → kazanan yok
+    ]);
+    expect(r.plan[0].freeCount).toBe(1);
+    expect(r.general.map((x) => x.idea.id)).toEqual(['genel']);
+    expect(r.winnerIdea).toBeNull(); // genel fikre onay yok
+  });
+
+  it('oda dışında kalan gündeki fikir genel sayılır', () => {
+    const s = makeSnap(['A']);
+    const x = addIdea(s, 'x', 1);
+    x.day = '2027-01-01'; x.slot = 'aksam';
+    vote(s, 'm0', 'x', 'yes');
+    const r = computeResult(s);
+    expect(r.plan).toHaveLength(0);
+    expect(r.winnerIdea?.id).toBe('x');
+  });
+});

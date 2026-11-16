@@ -7,7 +7,8 @@ export interface DataStore {
   createRoom(input: { name: string; startDate: string; creatorName: string; days?: string[] }): Promise<{ room: Room; creator: Member }>;
   getRoom(roomId: ID): Promise<RoomSnapshot | null>;
   joinRoom(roomId: ID, name: string): Promise<Member>;
-  addIdea(roomId: ID, input: { name: string; place?: string; note?: string; suggestionId?: string; addedBy: ID }): Promise<Idea>;
+  /** day + slot birlikte verilir (o günün o dilimine fikir); verilmezse "herhangi bir gün". */
+  addIdea(roomId: ID, input: { name: string; place?: string; note?: string; suggestionId?: string; addedBy: ID; day?: string | null; slot?: Slot | null }): Promise<Idea>;
   /** Sadece fikri ekleyen düzenleyebilir. */
   updateIdea(ideaId: ID, memberId: ID, patch: { name?: string; place?: string; note?: string }): Promise<Idea>;
   /** Ekleyen ya da oda kurucusu silebilir. O fikrin cevaplarını da siler. */

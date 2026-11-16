@@ -2,12 +2,17 @@
 import { useId, useState } from 'react';
 import { copy } from '../copy';
 import { SUGGESTIONS, type Suggestion } from '../suggestions';
-import type { Idea } from '../types';
+import type { Idea, Slot } from '../types';
+import { SLOTS, slotLabel } from '../slots';
+import { formatDate } from '../../core/format';
 import { findByName, sameName } from '../../core/names';
 import { Sheet } from '../../core/components/Sheet';
 import { SuggestionStrip } from './SuggestionStrip';
 
-export interface IdeaDraft { name: string; place: string; note: string; suggestionId: string | null }
+/** Fikrin zamanı: null = herhangi bir gün */
+export type OccasionPick = { day: string; slot: Slot } | null;
+export interface IdeaDraft { name: string; place: string; note: string; suggestionId: string | null; occasion: OccasionPick }
+export const sameOccasion = (i: Idea, o: OccasionPick) => (o ? i.day === o.day && i.slot === o.slot : !i.day);
 
 export interface IdeaSheetProps {
   open: boolean;
@@ -15,7 +20,11 @@ export interface IdeaSheetProps {
   ideas: Idea[];
   onClose: () => void;
   onSubmit: (d: IdeaDraft) => Promise<boolean>;
-  onPickSuggestion: (s: Suggestion) => Promise<boolean>;
+  onPickSuggestion: (s: Suggestion, occasion: OccasionPick) => Promise<boolean>;
+  /** Oda günleri: verilirse gün/dilim seçici çıkar */
+  days?: string[];
+  /** Panel açılırken seçili gelen zaman */
+  occasion?: OccasionPick;
 }
 
 export function IdeaSheet(props: IdeaSheetProps) {
@@ -23,7 +32,7 @@ export function IdeaSheet(props: IdeaSheetProps) {
   return <Body key={props.editing?.id ?? 'new'} {...props} />;
 }
 
-function Body({ editing, ideas, onClose, onSubmit, onPickSuggestion }: IdeaSheetProps) {
+function Body({ editing, ideas, onClose, onSubmit, onPickSuggestion, days, occasion: initial }: IdeaSheetProps) {
   const titleId = useId();
   const [name, setName] = useState(editing?.name ?? '');
   const [place, setPlace] = useState(editing?.place ?? '');
@@ -31,18 +40,22 @@ function Body({ editing, ideas, onClose, onSubmit, onPickSuggestion }: IdeaSheet
   const [showNote, setShowNote] = useState(!!editing?.note);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [occasion, setOccasion] = useState<OccasionPick>(initial ?? null);
+  // Aynı isim kontrolü sadece aynı gün+dilimde (farklı günlere aynı fikir eklenebilir)
+  const ref: OccasionPick = editing ? (editing.day && editing.slot ? { day: editing.day, slot: editing.slot } : null) : occasion;
+  const here = ideas.filter((i) => sameOccasion(i, ref));
 
   async function submit() {
     if (!name.trim()) return setError(copy.ideaSheet.errName);
-    if (ideas.some((i) => i.id !== editing?.id && sameName(i.name, name))) return setError(copy.ideaSheet.errDuplicate);
+    if (here.some((i) => i.id !== editing?.id && sameName(i.name, name))) return setError(copy.ideaSheet.errDuplicate);
     setBusy(true);
-    const ok = await onSubmit({ name, place, note, suggestionId: findByName([...SUGGESTIONS], name)?.id ?? null });
+    const ok = await onSubmit({ name, place, note, suggestionId: findByName([...SUGGESTIONS], name)?.id ?? null, occasion });
     setBusy(false);
     if (ok) onClose();
   }
 
   async function pick(s: Suggestion) {
-    if (await onPickSuggestion(s)) onClose();
+    if (await onPickSuggestion(s, occasion)) onClose();
   }
 
   return (
@@ -50,7 +63,34 @@ function Body({ editing, ideas, onClose, onSubmit, onPickSuggestion }: IdeaSheet
       <h2 id={titleId} className="h1">
         {editing ? copy.ideaSheet.titleEdit : copy.ideaSheet.titleAdd}
       </h2>
-      {!editing && <SuggestionStrip title ideas={ideas} onPick={(s) => void pick(s)} />}
+      {!editing && days && days.length > 0 && (
+        <div className="occ">
+          <p className="sec s13">{copy.occasion.dayLabel}</p>
+          <div className="occ-row">
+            <button type="button" className="btn2 sm" aria-pressed={!occasion} onClick={() => setOccasion(null)}>
+              {copy.occasion.any}
+            </button>
+            {days.map((d) => (
+              <button key={d} type="button" className="btn2 sm" aria-pressed={occasion?.day === d} onClick={() => setOccasion({ day: d, slot: occasion?.slot ?? 'gunduz' })}>
+                {formatDate(d)}
+              </button>
+            ))}
+          </div>
+          {occasion && (
+            <>
+              <p className="sec s13">{copy.occasion.slotLabel}</p>
+              <div className="occ-row">
+                {SLOTS.map((s) => (
+                  <button key={s} type="button" className="btn2 sm" aria-pressed={occasion.slot === s} onClick={() => setOccasion({ day: occasion.day, slot: s })}>
+                    {slotLabel(s)}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      {!editing && <SuggestionStrip title ideas={here} onPick={(s) => void pick(s)} />}
       <div className="fld">
         <label htmlFor="idea-name">{copy.ideaSheet.nameLabel}</label>
         <input

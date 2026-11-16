@@ -28,4 +28,10 @@ describe('landingScreen', () => {
     vote(s, 'm1', 'a', 'yes');
     expect(landingScreen(s, 'm0')).toBe('fikirler');
   });
+  it('arkadaş (kurucu değil): cevap yok → cevap, cevap var → plan', () => {
+    const s = makeSnap(['A', 'B']);
+    expect(landingScreen(s, 'm1')).toBe('cevap');
+    free(s, 'm1', '2026-11-14', 'aksam');
+    expect(landingScreen(s, 'm1')).toBe('plan');
+  });
 });

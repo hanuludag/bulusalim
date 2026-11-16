@@ -11,12 +11,16 @@ import { TopBar } from '../../core/components/TopBar';
 import { Dock } from '../../core/components/Dock';
 import { useToast } from '../../core/useToast';
 import { IdeaRow } from '../components/IdeaRow';
-import { IdeaSheet, type IdeaDraft } from '../components/IdeaSheet';
+import { IdeaSheet, type IdeaDraft, type OccasionPick } from '../components/IdeaSheet';
+import { groupIdeas } from '../groups';
+import { roomDays } from '../days';
+import { slotHours, slotLabel } from '../slots';
+import { formatDate } from '../../core/format';
 import { SuggestionStrip } from '../components/SuggestionStrip';
 import { useRoomScreen } from './useRoomScreen';
 import './screens.css';
 
-type SheetState = { open: false } | { open: true; editing: Idea | null };
+type SheetState = { open: false } | { open: true; editing: Idea | null; occasion?: OccasionPick };
 
 export default function IdeasScreen() {
   const { gate, ctx } = useRoomScreen();
@@ -59,14 +63,17 @@ export default function IdeasScreen() {
     }
   }
 
-  const addSuggestion = (s: Suggestion) =>
-    run(() => store.addIdea(snap.room.id, { name: s.name, suggestionId: s.id, addedBy: me.id }));
+  const addSuggestion = (s: Suggestion, o: OccasionPick = null) =>
+    run(() => store.addIdea(snap.room.id, { name: s.name, suggestionId: s.id, addedBy: me.id, day: o?.day ?? null, slot: o?.slot ?? null }));
 
   const save = (d: IdeaDraft) =>
     run(() =>
       sheet.open && sheet.editing
         ? store.updateIdea(sheet.editing.id, me.id, { name: d.name, place: d.place, note: d.note })
-        : store.addIdea(snap.room.id, { name: d.name, place: d.place, note: d.note, suggestionId: d.suggestionId ?? undefined, addedBy: me.id }),
+        : store.addIdea(snap.room.id, {
+            name: d.name, place: d.place, note: d.note, suggestionId: d.suggestionId ?? undefined, addedBy: me.id,
+            day: d.occasion?.day ?? null, slot: d.occasion?.slot ?? null,
+          }),
     );
 
   async function confirmDelete() {
@@ -80,6 +87,22 @@ export default function IdeasScreen() {
   }
 
   const hasIdeas = snap.ideas.length > 0;
+  const groups = groupIdeas(snap);
+  const row = (idea: Idea) => (
+    <IdeaRow
+      key={idea.id}
+      idea={idea}
+      myVote={myVote(idea.id)}
+      yesNames={voters(idea.id, 'yes')}
+      noNames={voters(idea.id, 'no')}
+      addedBy={nameOf(idea.addedBy)}
+      canEdit={idea.addedBy === me.id}
+      canDelete={idea.addedBy === me.id || ctx.isCreator}
+      onVote={(v) => vote(idea, v)}
+      onEdit={() => setSheet({ open: true, editing: idea })}
+      onDelete={() => setToDelete(idea)}
+    />
+  );
   const showDock = hasMyVote(snap, me.id);
 
   return (
@@ -100,27 +123,36 @@ export default function IdeasScreen() {
       </div>
 
       {hasIdeas ? (
-        <ul className="idea-list">
-          {snap.ideas.map((idea) => (
-            <IdeaRow
-              key={idea.id}
-              idea={idea}
-              myVote={myVote(idea.id)}
-              yesNames={voters(idea.id, 'yes')}
-              noNames={voters(idea.id, 'no')}
-              addedBy={nameOf(idea.addedBy)}
-              canEdit={idea.addedBy === me.id}
-              canDelete={idea.addedBy === me.id || ctx.isCreator}
-              onVote={(v) => vote(idea, v)}
-              onEdit={() => setSheet({ open: true, editing: idea })}
-              onDelete={() => setToDelete(idea)}
-            />
+        <div className="idea-groups">
+          {groups.general.length > 0 && (
+            <section>
+              {groups.days.length > 0 && <h2 className="pad grp-day">{copy.occasion.any}</h2>}
+              <ul className="idea-list">{groups.general.map(row)}</ul>
+            </section>
+          )}
+          {groups.days.map((g) => (
+            <section key={g.day}>
+              <h2 className="pad grp-day">{formatDate(g.day)}</h2>
+              {g.slots.map((sg) => (
+                <div key={sg.slot}>
+                  <p className="pad grp-slot sec s13">
+                    {slotLabel(sg.slot)} <span className="mono">{slotHours(sg.slot)}</span>
+                  </p>
+                  <ul className="idea-list">{sg.ideas.map(row)}</ul>
+                </div>
+              ))}
+              <div className="pad grp-add">
+                <button className="tb sm" type="button" onClick={() => setSheet({ open: true, editing: null, occasion: { day: g.day, slot: 'gunduz' } })}>
+                  {copy.occasion.addToDay}
+                </button>
+              </div>
+            </section>
           ))}
-        </ul>
+        </div>
       ) : (
         <div className="ideas-empty">
           <p className="pad s17 m">{copy.ideas.empty}</p>
-          <SuggestionStrip ideas={snap.ideas} onPick={addSuggestion} />
+          <SuggestionStrip ideas={groups.general} onPick={(sg) => void addSuggestion(sg)} />
           <div className="pad">
             <button className="btn2 sm" type="button" onClick={() => setSheet({ open: true, editing: null })}>
               {copy.ideas.add}
@@ -141,6 +173,8 @@ export default function IdeasScreen() {
         open={sheet.open}
         editing={sheet.open ? sheet.editing : null}
         ideas={snap.ideas}
+        days={roomDays(snap.room)}
+        occasion={sheet.open ? sheet.occasion : null}
         onClose={() => setSheet({ open: false })}
         onSubmit={save}
         onPickSuggestion={addSuggestion}

@@ -7,9 +7,13 @@ import { formatDate } from '../../core/format';
 import { roomDays } from '../days';
 import './TimeGrid.css';
 
-export interface TimeGridProps { result: Result; snap: RoomSnapshot; meId: string; onToggle: (day: string, slot: Slot) => void }
+export interface TimeGridProps {
+  result: Result; snap: RoomSnapshot; meId: string; onToggle: (day: string, slot: Slot) => void;
+  /** Sade görünüm (arkadaşlar): sayı yok, sadece kendi seçimin ✓ */
+  simple?: boolean;
+}
 
-export function TimeGrid({ result, snap, meId, onToggle }: TimeGridProps) {
+export function TimeGrid({ result, snap, meId, onToggle, simple = false }: TimeGridProps) {
   const days = roomDays(snap.room);
   return (
     <div className="tgrid">
@@ -30,17 +34,17 @@ export function TimeGrid({ result, snap, meId, onToggle }: TimeGridProps) {
               const cell = result.slots.find((s) => s.day === day && s.slot === slot);
               const n = cell?.freeCount ?? 0;
               const mine = cell?.freeIds.includes(meId) ?? false;
-              const all = result.allFreeSlots.some((s) => s.day === day && s.slot === slot);
+              const all = !simple && result.allFreeSlots.some((s) => s.day === day && s.slot === slot);
               return (
                 <button
                   key={slot}
                   type="button"
-                  className={['c', mine && 'me', all && 'all', n === 0 && 'z'].filter(Boolean).join(' ')}
+                  className={['c', mine && 'me', all && 'all', !simple && n === 0 && 'z'].filter(Boolean).join(' ')}
                   aria-pressed={mine}
-                  aria-label={copy.time.cellLabel(formatDate(day), slotLower(slot), n, mine)}
+                  aria-label={simple ? copy.time.cellLabelSimple(formatDate(day), slotLower(slot), mine) : copy.time.cellLabel(formatDate(day), slotLower(slot), n, mine)}
                   onClick={() => onToggle(day, slot)}
                 >
-                  {n}
+                  {simple ? (mine ? '✓' : '') : n}
                 </button>
               );
             })}

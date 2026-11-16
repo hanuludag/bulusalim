@@ -74,7 +74,7 @@
   margin-top: var(--sp-2);
 }
 .who-btn {
-  margin-left: calc(-1 * var(--sp-2));
+  margin-left: 0;
 }
 .who-list {
   display: flex;

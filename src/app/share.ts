@@ -14,12 +14,15 @@ export const waitingNames = (snap: RoomSnapshot, r: Result) =>
 export const remindText = (snap: RoomSnapshot, r: Result, link: string) =>
   copy.share.remind(snap.room.name, r.voters.length, r.totalMembers, waitingNames(snap, r), link);
 
-/** Sadece mevcut parçalar yazılır: kazanan fikir ve/veya en iyi zaman. */
+/** Sadece mevcut parçalar yazılır: gün gün plan, sonra genel kazanan ve/veya en iyi zaman. */
 export function resultText(snap: RoomSnapshot, r: Result, link: string): string {
   const parts: string[] = [];
+  r.plan.forEach((o) => {
+    if (o.winner) parts.push(`${formatDate(o.day)} ${slotLower(o.slot)}: ${o.winner.place ? `${o.winner.name} · ${o.winner.place}` : o.winner.name}`);
+  });
   const w = r.winnerIdea;
   if (w) parts.push(w.place ? `${w.name} · ${w.place}` : w.name);
   const b = r.bestSlot;
-  if (b) parts.push(`${formatDate(b.day)} ${slotLower(b.slot)} (${slotHours(b.slot)})`);
+  if (b && (w || r.plan.length === 0)) parts.push(`${formatDate(b.day)} ${slotLower(b.slot)} (${slotHours(b.slot)})`);
   return copy.share.result(snap.room.name, parts, link);
 }
